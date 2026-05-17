@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Movies — Selectarr{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div>
+    <div class="page-eyebrow">
+      <span class="service-tag"><span class="service-dot radarr"></span> Radarr</span>
+    </div>
+    <h1 class="page-title">Movies</h1>
+    <p class="page-subtitle">Browse and selectively delete movies. Files are removed via Radarr and added to the import exclusion list.</p>
+  </div>
+</header>
+
+{% if service_error %}
+<div class="banner banner-error">
+  <span class="banner-icon" aria-hidden="true">!</span>
+  <div class="banner-body">
+    <strong>Service unavailable</strong>
+    <span>{{ service_error }} <a href="/settings">Check Settings →</a></span>
+  </div>
+</div>
+{% endif %}
+{% if jellyfin_warning %}
+<div class="banner banner-warning">
+  <span class="banner-icon" aria-hidden="true">!</span>
+  <div class="banner-body">
+    <strong>Watch status unavailable</strong>
+    <span>{{ jellyfin_warning }}</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="filter-bar">
+  <label class="field">
+    <span class="field-label">Filter</span>
+    <span class="select-wrap">
+      <select id="filter-select" name="filter"
+        hx-get="/movies/list"
+        hx-target="#movies-container"
+        hx-include="#user-select"
+        hx-indicator="#loading">
+        {% for value, label in filter_options %}
+          <option value="{{ value }}" {% if filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <span class="select-caret">▾</span>
+    </span>
+  </label>
+
+  <label class="field">
+    <span class="field-label">User</span>
+    <span class="select-wrap">
+      <select id="user-select" name="user_id"
+        hx-get="/movies/list"
+        hx-target="#movies-container"
+        hx-include="#filter-select"
+        hx-indicator="#loading">
+        <option value="">— all users —</option>
+        {% for user in users %}
+          <option value="{{ user.id }}" {% if filter_user_id == user.id %}selected{% endif %}>{{ user.name }}</option>
+        {% endfor %}
+      </select>
+      <span class="select-caret">▾</span>
+    </span>
+  </label>
+
+  <div class="filter-bar-spacer">
+    <span id="loading" class="htmx-indicator muted small">Loading…</span>
+  </div>
+</div>
+
+<div id="movies-container">
+  {% include "partials/movies_list.html" %}
+</div>
+{% endblock %}

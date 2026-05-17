@@ -1,0 +1,251 @@
+{% if artists %}
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th class="col-cb">
+          <label class="cb">
+            <input type="checkbox" id="cb-all-artists" />
+            <span class="cb-box" aria-hidden="true">
+              <svg viewBox="0 0 12 12" class="cb-check"><path d="M2.5 6.2 L4.8 8.5 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg viewBox="0 0 12 12" class="cb-dash"><path d="M3 6 H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+          </label>
+        </th>
+        <th class="col-expand"></th>
+        <th>Artist</th>
+        <th class="col-num">Albums</th>
+        <th class="col-size">
+          <button class="sort-btn{% if sort_by == 'size' %} sort-active{% endif %}"
+            hx-get="/music/list"
+            hx-target="#music-container"
+            hx-swap="innerHTML"
+            hx-include="#filter-select,#user-select"
+            hx-vals='{"sort_by":"size","sort_dir":"{{ "asc" if sort_dir == "desc" else "desc" }}"}'
+            aria-label="Sort by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
+        </th>
+        <th class="col-watched">Listened</th>
+        <th class="col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for artist in artists %}
+      <tr>
+        <td class="col-cb">
+          <label class="cb">
+            <input class="ar-cb" type="checkbox" value="{{ artist.lidarr_id }}" />
+            <span class="cb-box" aria-hidden="true">
+              <svg viewBox="0 0 12 12" class="cb-check"><path d="M2.5 6.2 L4.8 8.5 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg viewBox="0 0 12 12" class="cb-dash"><path d="M3 6 H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+          </label>
+        </td>
+        <td class="col-expand">
+          <button class="row-toggle" type="button"
+            onclick="arToggle(this, {{ artist.lidarr_id }})"
+            aria-label="Expand albums">
+            <svg class="chevron-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg>
+          </button>
+        </td>
+        <td><span class="title-cell">{{ artist.name }}</span></td>
+        <td class="col-num mono">{{ artist.album_count }}</td>
+        <td class="col-size mono muted">
+          {%- if artist.total_size_bytes >= 1073741824 %}{{ (artist.total_size_bytes / 1073741824) | round(1) }} GB
+          {%- elif artist.total_size_bytes > 0 %}{{ (artist.total_size_bytes / 1048576) | round(1) }} MB
+          {%- else %}—{%- endif %}
+        </td>
+        <td class="col-watched">
+          {% if artist.watch_status %}
+            {% if artist.watch_status.watched_by_none %}
+              <span class="muted small">Never listened</span>
+            {% elif artist.watch_status.watched_by_all %}
+              <span class="small">Listened by all</span>
+            {% else %}
+              {% set ns = namespace(names=[]) %}
+              {% for user in users %}
+                {% if artist.watch_status.per_user.get(user.id, false) %}
+                  {% set ns.names = ns.names + [user.name] %}
+                {% endif %}
+              {% endfor %}
+              <span class="small">Listened by: {{ ns.names | join(', ') }}</span>
+            {% endif %}
+          {% else %}
+            <span class="muted small">—</span>
+          {% endif %}
+        </td>
+        <td class="col-actions">
+          <button class="btn btn-ghost-danger btn-sm" type="button"
+            hx-post="/music/confirm"
+            hx-vals='{"action":"artist","artist_id":{{ artist.lidarr_id }}}'
+            hx-target="#delete-area"
+            hx-swap="innerHTML">
+            <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
+            Delete artist
+          </button>
+        </td>
+      </tr>
+      <tr class="row-nested">
+        <td colspan="7" style="padding:0;">
+          <div id="expand-a{{ artist.lidarr_id }}"></div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="nested-action">
+    <button id="ar-del-btn" type="button" class="btn btn-danger btn-sm" disabled
+      hx-post="/music/confirm"
+      hx-target="#delete-area"
+      hx-swap="innerHTML">
+      <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
+      Delete selected
+    </button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var allCb  = document.getElementById('cb-all-artists');
+  var delBtn = document.getElementById('ar-del-btn');
+  // artistId → { fullAlbums: [id,…], albumTrkMap: { albumId: [trkFileId,…] } }
+  var artMap = {};
+
+  function getArtistCbs() {
+    return Array.from(document.querySelectorAll('.ar-cb'));
+  }
+
+  function updateUI() {
+    var cbs = getArtistCbs();
+    var hasAny  = cbs.some(function (c) { return c.checked || c.indeterminate; });
+    var allFull = cbs.length > 0 && cbs.every(function (c) { return c.checked && !c.indeterminate; });
+    var noneAny = cbs.every(function (c) { return !c.checked && !c.indeterminate; });
+    delBtn.disabled = !hasAny;
+    if (allCb) {
+      allCb.checked       = allFull;
+      allCb.indeterminate = !noneAny && !allFull;
+    }
+  }
+
+  // Custom toggle: saves album panel state before closing.
+  window.arToggle = function (btn, artistId) {
+    var el = document.getElementById('expand-a' + artistId);
+    if (el && el.children.length > 0) {
+      var getFn = window['getAlbumSelection_' + artistId];
+      if (getFn) {
+        var sel = getFn();
+        var hasAny = sel.fullAlbums.length > 0 || Object.keys(sel.albumTrkMap).length > 0;
+        if (hasAny) artMap[artistId] = sel;
+        else delete artMap[artistId];
+      }
+      el.innerHTML = '';
+      btn.classList.remove('open');
+    } else {
+      btn.classList.add('open');
+      htmx.ajax('GET', '/music/artists/' + artistId + '/albums', {
+        target: '#expand-a' + artistId, swap: 'innerHTML'
+      });
+    }
+  };
+
+  // Called by albums IIFE whenever album/track selection changes (bottom-up propagation).
+  window.notifyArtistChanged = function (artistId, fullAlbums, albumTrkMap) {
+    var cb = document.querySelector('.ar-cb[value="' + artistId + '"]');
+    if (!cb) return;
+    var hasAny  = fullAlbums.length > 0 || Object.keys(albumTrkMap).length > 0;
+    // Check if every album checkbox with files is fully checked.
+    var form = document.getElementById('albums-form-' + artistId);
+    var albumCbs = form ? Array.from(form.querySelectorAll('.al-cb-' + artistId)) : [];
+    var allFull = albumCbs.length > 0 && albumCbs.every(function (c) { return c.checked && !c.indeterminate; });
+    if (allFull) {
+      cb.checked = true; cb.indeterminate = false;
+      delete artMap[artistId];
+    } else if (hasAny) {
+      cb.checked = false; cb.indeterminate = true;
+      artMap[artistId] = { fullAlbums: fullAlbums, albumTrkMap: albumTrkMap };
+    } else {
+      cb.checked = false; cb.indeterminate = false;
+      delete artMap[artistId];
+    }
+    updateUI();
+  };
+
+  // After album panel loads: restore saved selection or cascade artist checkbox down.
+  document.addEventListener('htmx:afterSwap', function (e) {
+    if (!e.target.id || !e.target.id.startsWith('expand-a')) return;
+    var artistId = parseInt(e.target.id.slice('expand-a'.length), 10);
+    var artistCb = document.querySelector('.ar-cb[value="' + artistId + '"]');
+    if (!artistCb) return;
+    var saved  = artMap[artistId];
+    var setFn  = window['setAlbumSelection_' + artistId];
+    var syncFn = window['syncAllAlbums_' + artistId];
+    if (saved && setFn) {
+      setFn(saved);
+    } else if (artistCb.checked && syncFn) {
+      syncFn(true);
+    }
+  });
+
+  // Artist checkbox clicked → cascade to albums panel.
+  document.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('ar-cb')) return;
+    var artistId = parseInt(e.target.value, 10);
+    e.target.indeterminate = false;
+    delete artMap[artistId];
+    var syncFn = window['syncAllAlbums_' + artistId];
+    if (syncFn) syncFn(e.target.checked);
+    updateUI();
+  });
+
+  // Select-all artist checkbox.
+  if (allCb) {
+    allCb.addEventListener('change', function () {
+      var on = allCb.checked;
+      artMap = {};
+      getArtistCbs().forEach(function (cb) {
+        cb.checked = on; cb.indeterminate = false;
+        var syncFn = window['syncAllAlbums_' + parseInt(cb.value, 10)];
+        if (syncFn) syncFn(on);
+      });
+      updateUI();
+    });
+  }
+
+  // Build request for "Delete selected" at the artist level.
+  delBtn.addEventListener('htmx:configRequest', function (e) {
+    var params = e.detail.parameters;
+    var artistIds = [], albumIds = [], trkFileIds = [];
+
+    getArtistCbs().forEach(function (cb) {
+      var artistId = parseInt(cb.value, 10);
+      if (!cb.checked && !cb.indeterminate) return;
+      if (cb.checked && !cb.indeterminate) {
+        artistIds.push(artistId);
+      } else {
+        // Indeterminate: prefer live panel data, fall back to artMap.
+        var getFn = window['getAlbumSelection_' + artistId];
+        var sel   = getFn ? getFn() : (artMap[artistId] || { fullAlbums: [], albumTrkMap: {} });
+        albumIds = albumIds.concat(sel.fullAlbums);
+        Object.keys(sel.albumTrkMap).forEach(function (aid) {
+          trkFileIds = trkFileIds.concat(sel.albumTrkMap[aid]);
+        });
+      }
+    });
+
+    var onlyArtists = artistIds.length > 0 && albumIds.length === 0 && trkFileIds.length === 0;
+    var onlyAlbums  = artistIds.length === 0 && albumIds.length > 0 && trkFileIds.length === 0;
+    var onlyTracks  = artistIds.length === 0 && albumIds.length === 0 && trkFileIds.length > 0;
+    var action = onlyArtists ? 'artist' : onlyAlbums ? 'album' : onlyTracks ? 'track' : 'mixed';
+
+    Object.keys(params).forEach(function (k) { delete params[k]; });
+    params['action'] = action;
+    if (artistIds.length) params['artist_ids']    = artistIds;
+    if (albumIds.length)  params['album_ids']      = albumIds;
+    if (trkFileIds.length) params['track_file_ids'] = trkFileIds;
+  });
+
+  updateUI();
+})();
+</script>
+{% else %}
+<div class="empty-state">No artists match the current filter.</div>
+{% endif %}

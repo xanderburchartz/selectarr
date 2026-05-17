@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Error — Selectarr{% endblock %}
+{% block content %}
+<article>
+  <header>
+    <h2>{% if traceback is defined %}Server Error{% else %}Configuration Error{% endif %}</h2>
+  </header>
+
+  <p>{{ message }}</p>
+
+  {% if traceback is defined %}
+  <details open>
+    <summary style="cursor:pointer; font-weight:600; margin-bottom:0.5rem;">Full traceback</summary>
+    <pre style="background:var(--pico-code-background-color, #1e1e1e); color:#d4d4d4; padding:1rem; border-radius:6px; overflow-x:auto; font-size:0.82em; line-height:1.5;">{{ traceback }}</pre>
+  </details>
+  {% else %}
+  <p>Please check your <code>config.yaml</code> and ensure all required services are configured.</p>
+  <a href="/settings" role="button" class="secondary">Go to Settings</a>
+  {% endif %}
+</article>
+{% endblock %}

@@ -1,0 +1,64 @@
+<header class="drawer-header">
+  <div>
+    <div class="drawer-eyebrow">{% if result.dry_run %}Dry-run preview{% else %}Deletion complete{% endif %}</div>
+    <h2>{% if result.dry_run %}Dry-run complete{% else %}Result{% endif %}</h2>
+  </div>
+  <button class="icon-btn" onclick="closeDrawer(); window.location.reload();" aria-label="Close">
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+  </button>
+</header>
+
+<div class="drawer-body">
+  {% if result.dry_run %}
+  <div class="banner banner-info">
+    <span class="banner-icon" aria-hidden="true">i</span>
+    <div class="banner-body">
+      <strong>Dry-run complete.</strong>
+      <span>{{ result.total_success }} item(s) would be deleted.</span>
+    </div>
+  </div>
+  {% elif result.total_error == 0 %}
+  <div class="banner banner-success">
+    <span class="banner-icon" aria-hidden="true">✓</span>
+    <div class="banner-body">
+      <strong>Deletion complete.</strong>
+      <span>{{ result.total_success }} item(s) deleted successfully.</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="banner banner-error">
+    <span class="banner-icon" aria-hidden="true">!</span>
+    <div class="banner-body">
+      <strong>Partially failed.</strong>
+      <span>{{ result.total_success }} succeeded, {{ result.total_error }} failed.</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <h3 class="drawer-section-title">Result</h3>
+  <ul class="drawer-list">
+    {% for item in result.items %}
+    <li>
+      <span class="title-cell">{{ item.title }}</span>
+      {% if item.success %}
+        <span class="result-success small">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 8.5 L7 12 L13 5"/></svg>
+          {% if result.dry_run %}would delete{% else %}deleted{% endif %}
+        </span>
+      {% else %}
+        <span class="result-error small">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+          {{ item.message }}
+        </span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<footer class="drawer-footer">
+  <button type="button" class="btn btn-primary"
+    onclick="closeDrawer(); window.location.reload();">
+    Close &amp; refresh
+  </button>
+</footer>

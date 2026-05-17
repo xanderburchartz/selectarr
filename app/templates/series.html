@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Series — Selectarr{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div>
+    <div class="page-eyebrow">
+      <span class="service-tag"><span class="service-dot sonarr"></span> Sonarr</span>
+    </div>
+    <h1 class="page-title">Series</h1>
+    <p class="page-subtitle">Delete at series, season, or individual episode level.</p>
+  </div>
+</header>
+
+{% if service_error %}
+<div class="banner banner-error">
+  <span class="banner-icon" aria-hidden="true">!</span>
+  <div class="banner-body">
+    <strong>Service unavailable</strong>
+    <span>{{ service_error }} <a href="/settings">Check Settings →</a></span>
+  </div>
+</div>
+{% endif %}
+{% if jellyfin_warning %}
+<div class="banner banner-warning">
+  <span class="banner-icon" aria-hidden="true">!</span>
+  <div class="banner-body">
+    <strong>Watch status unavailable</strong>
+    <span>{{ jellyfin_warning }}</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="filter-bar">
+  <label class="field">
+    <span class="field-label">Filter</span>
+    <span class="select-wrap">
+      <select id="filter-select" name="filter"
+        hx-get="/series/list"
+        hx-target="#series-container"
+        hx-include="#user-select"
+        hx-indicator="#loading">
+        {% for value, label in filter_options %}
+          <option value="{{ value }}" {% if filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <span class="select-caret">▾</span>
+    </span>
+  </label>
+
+  <label class="field">
+    <span class="field-label">User</span>
+    <span class="select-wrap">
+      <select id="user-select" name="user_id"
+        hx-get="/series/list"
+        hx-target="#series-container"
+        hx-include="#filter-select"
+        hx-indicator="#loading">
+        <option value="">— all users —</option>
+        {% for user in users %}
+          <option value="{{ user.id }}" {% if filter_user_id == user.id %}selected{% endif %}>{{ user.name }}</option>
+        {% endfor %}
+      </select>
+      <span class="select-caret">▾</span>
+    </span>
+  </label>
+
+  <div class="filter-bar-spacer">
+    <span id="loading" class="htmx-indicator muted small">Loading…</span>
+  </div>
+</div>
+
+<div id="series-container">
+  {% include "partials/series_list.html" %}
+</div>
+{% endblock %}

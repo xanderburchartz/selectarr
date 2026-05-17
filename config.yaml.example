@@ -1,0 +1,28 @@
+# Selectarr configuration example
+# Copy this file to config.yaml and fill in your values.
+
+# Jellyfin (required)
+jellyfin:
+  url: "http://jellyfin:8096"
+  api_key: "your-jellyfin-api-key"
+
+# Radarr (optional — omit section to disable Movies tab)
+radarr:
+  url: "http://radarr:7878"
+  api_key: "your-radarr-api-key"
+
+# Sonarr (optional — omit section to disable Series tab)
+sonarr:
+  url: "http://sonarr:8989"
+  api_key: "your-sonarr-api-key"
+
+# Lidarr (optional — omit section to disable Music tab)
+lidarr:
+  url: "http://lidarr:8686"
+  api_key: "your-lidarr-api-key"
+
+# Dry-run mode: when true, deletions are only simulated (default: true)
+dry_run: true
+
+# Add deleted items to the import exclusion list so they aren't re-downloaded
+add_import_exclusion: true

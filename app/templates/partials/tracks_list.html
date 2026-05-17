@@ -1,0 +1,44 @@
+{% macro fmt_size(b) %}
+  {%- if not b %}—
+  {%- elif b >= 1073741824 %}{{ (b / 1073741824) | round(1) }} GB
+  {%- else %}{{ (b / 1048576) | round(1) }} MB
+  {%- endif %}
+{%- endmacro %}
+<div class="nested-wrap nested-wrap-inner">
+  <table class="data-table data-table-sub">
+    <thead>
+      <tr>
+        <th class="col-cb"></th>
+        <th>Title</th>
+        <th class="col-size">
+          <button class="sort-btn{% if sort_by == 'size' %} sort-active{% endif %}"
+            hx-get="/music/albums/{{ album_id }}/tracks?sort_by=size&sort_dir={{ 'asc' if sort_dir == 'desc' else 'desc' }}"
+            hx-target="#expand-al{{ album_id }}"
+            hx-swap="innerHTML"
+            aria-label="Sort tracks by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for track in tracks %}
+      <tr>
+        <td class="col-cb">
+          {% if track.track_file_id %}
+          <label class="cb">
+            <input type="checkbox" name="track_file_ids" value="{{ track.track_file_id }}" />
+            <span class="cb-box" aria-hidden="true">
+              <svg viewBox="0 0 12 12" class="cb-check"><path d="M2.5 6.2 L4.8 8.5 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <svg viewBox="0 0 12 12" class="cb-dash"><path d="M3 6 H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+          </label>
+          {% else %}
+          <span class="muted-dim">—</span>
+          {% endif %}
+        </td>
+        <td class="title-cell">{{ track.title }}</td>
+        <td class="col-size mono muted">{{ fmt_size(track.file_size_bytes) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

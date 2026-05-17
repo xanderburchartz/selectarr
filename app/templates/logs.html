@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Activity — Selectarr{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div>
+    <div class="page-eyebrow"><span class="muted small mono">/var/log/selectarr</span></div>
+    <h1 class="page-title">Activity</h1>
+    <p class="page-subtitle">Every deletion is logged here with timestamp, scope, mode, and result.</p>
+  </div>
+  <div class="page-action">
+    <button class="btn btn-secondary btn-sm"
+      hx-post="/logs/clear"
+      hx-target="#log-container"
+      hx-confirm="Clear all log entries?">
+      <span class="btn-icon">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg>
+      </span>
+      Clear log
+    </button>
+  </div>
+</header>
+
+<div class="logs-summary">
+  <div class="stat">
+    <div class="stat-label">Entries</div>
+    <div class="stat-value mono">{{ entries | length }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Succeeded</div>
+    <div class="stat-value mono success">{{ entries | selectattr('success') | list | length }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Failed</div>
+    <div class="stat-value mono danger">{{ entries | rejectattr('success') | list | length }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Dry-runs</div>
+    <div class="stat-value mono warning">{{ entries | selectattr('dry_run') | list | length }}</div>
+  </div>
+</div>
+
+<div id="log-container">
+  {% include "partials/logs_list.html" %}
+</div>
+{% endblock %}

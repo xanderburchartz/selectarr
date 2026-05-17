@@ -1,0 +1,57 @@
+{% if cleared is defined %}
+<div class="banner banner-info" style="margin-bottom:14px;">
+  <span class="banner-icon" aria-hidden="true">i</span>
+  <div class="banner-body"><strong>Log cleared</strong><span>{{ cleared }} entr{{ 'y' if cleared == 1 else 'ies' }} removed.</span></div>
+</div>
+{% endif %}
+
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th class="col-ts">Timestamp</th>
+        <th class="col-type">Type</th>
+        <th>Title</th>
+        <th class="col-mode">Mode</th>
+        <th class="col-result">Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for entry in entries %}
+      <tr>
+        <td class="col-ts mono muted">{{ entry.timestamp[:19].replace("T", " ") }}</td>
+        <td class="col-type">
+          <span class="pill pill-primary">{{ entry.media_type }}</span>
+        </td>
+        <td>
+          <span class="title-cell">{{ entry.title }}</span>
+          {% if entry.details %}<div class="muted small">{{ entry.details }}</div>{% endif %}
+        </td>
+        <td class="col-mode">
+          {% if entry.dry_run %}
+            <span class="pill pill-warning"><span class="pill-dot"></span>dry-run</span>
+          {% else %}
+            <span class="pill pill-info"><span class="pill-dot"></span>live</span>
+          {% endif %}
+        </td>
+        <td class="col-result">
+          {% if entry.success %}
+            <span class="result-success">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 8.5 L7 12 L13 5"/></svg>
+              OK
+            </span>
+          {% else %}
+            <span class="result-error">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+              error
+            </span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if not entries %}
+  <div class="empty-state">No log entries match the current filter.</div>
+  {% endif %}
+</div>

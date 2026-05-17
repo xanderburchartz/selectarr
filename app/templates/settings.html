@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Settings — Selectarr{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div>
+    <div class="page-eyebrow"><span class="muted small mono">~/config/config.yaml</span></div>
+    <h1 class="page-title">Settings</h1>
+    <p class="page-subtitle">Saved to config.yaml. Jellyfin is required; Radarr, Sonarr, and Lidarr are optional — leave both fields empty to disable a tab.</p>
+  </div>
+</header>
+
+{% if saved %}
+<div class="banner banner-success" style="margin-bottom:14px;">
+  <span class="banner-icon" aria-hidden="true">✓</span>
+  <div class="banner-body"><strong>Configuration saved successfully.</strong></div>
+</div>
+{% endif %}
+{% if error %}
+<div class="banner banner-error" style="margin-bottom:14px;">
+  <span class="banner-icon" aria-hidden="true">!</span>
+  <div class="banner-body"><strong>Could not save</strong><span>{{ error }}</span></div>
+</div>
+{% endif %}
+
+<form method="post" action="/settings">
+
+  <div class="settings-grid">
+
+    {# ── Jellyfin ────────────────────────────────────────────────────── #}
+    <section class="card">
+      <header class="card-header">
+        <div class="service-head">
+          <span class="service-dot jellyfin"></span>
+          <h2>Jellyfin</h2>
+          <span class="kind-tag kind-required">required</span>
+        </div>
+        <p>Watch-status source</p>
+      </header>
+      <div class="card-body card-body-stack">
+        <label class="field">
+          <span class="field-label">URL</span>
+          <input class="input mono" type="text" name="jellyfin_url" id="jellyfin_url"
+                 value="{{ jellyfin_url }}" placeholder="http://jellyfin:8096" />
+        </label>
+        <label class="field">
+          <span class="field-label">
+            API Key <span class="field-required">required</span>
+          </span>
+          <input class="input mono" type="password" name="jellyfin_api_key" id="jellyfin_api_key"
+                 value="{{ jellyfin_api_key }}" placeholder="Paste API key" autocomplete="off" />
+        </label>
+        <div class="row gap-sm align-center">
+          <button type="button" class="btn btn-secondary btn-sm"
+            hx-post="/settings/test/jellyfin"
+            hx-include="#jellyfin_url, #jellyfin_api_key"
+            hx-target="#jellyfin-status"
+            hx-indicator="#jellyfin-spinner">
+            <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5.5 1.5v3M10.5 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0v-3zM8 11.5v3"/></svg></span>
+            Test connection
+          </button>
+          <span id="jellyfin-spinner" class="htmx-indicator muted small">Testing…</span>
+          <span id="jellyfin-status"></span>
+        </div>
+      </div>
+    </section>
+
+    {# ── Radarr ──────────────────────────────────────────────────────── #}
+    <section class="card">
+      <header class="card-header">
+        <div class="service-head">
+          <span class="service-dot radarr"></span>
+          <h2>Radarr</h2>
+          <span class="kind-tag">optional</span>
+        </div>
+        <p>Movies</p>
+      </header>
+      <div class="card-body card-body-stack">
+        <label class="field">
+          <span class="field-label">URL</span>
+          <input class="input mono" type="text" name="radarr_url" id="radarr_url"
+                 value="{{ radarr_url }}" placeholder="http://radarr:7878" />
+        </label>
+        <label class="field">
+          <span class="field-label">API Key</span>
+          <input class="input mono" type="password" name="radarr_api_key" id="radarr_api_key"
+                 value="{{ radarr_api_key }}" placeholder="Paste API key" autocomplete="off" />
+        </label>
+        <div class="row gap-sm align-center">
+          <button type="button" class="btn btn-secondary btn-sm"
+            hx-post="/settings/test/radarr"
+            hx-include="#radarr_url, #radarr_api_key"
+            hx-target="#radarr-status"
+            hx-indicator="#radarr-spinner">
+            <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5.5 1.5v3M10.5 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0v-3zM8 11.5v3"/></svg></span>
+            Test connection
+          </button>
+          <span id="radarr-spinner" class="htmx-indicator muted small">Testing…</span>
+          <span id="radarr-status"></span>
+        </div>
+      </div>
+    </section>
+
+    {# ── Sonarr ──────────────────────────────────────────────────────── #}
+    <section class="card">
+      <header class="card-header">
+        <div class="service-head">
+          <span class="service-dot sonarr"></span>
+          <h2>Sonarr</h2>
+          <span class="kind-tag">optional</span>
+        </div>
+        <p>Series, seasons, episodes</p>
+      </header>
+      <div class="card-body card-body-stack">
+        <label class="field">
+          <span class="field-label">URL</span>
+          <input class="input mono" type="text" name="sonarr_url" id="sonarr_url"
+                 value="{{ sonarr_url }}" placeholder="http://sonarr:8989" />
+        </label>
+        <label class="field">
+          <span class="field-label">API Key</span>
+          <input class="input mono" type="password" name="sonarr_api_key" id="sonarr_api_key"
+                 value="{{ sonarr_api_key }}" placeholder="Paste API key" autocomplete="off" />
+        </label>
+        <div class="row gap-sm align-center">
+          <button type="button" class="btn btn-secondary btn-sm"
+            hx-post="/settings/test/sonarr"
+            hx-include="#sonarr_url, #sonarr_api_key"
+            hx-target="#sonarr-status"
+            hx-indicator="#sonarr-spinner">
+            <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5.5 1.5v3M10.5 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0v-3zM8 11.5v3"/></svg></span>
+            Test connection
+          </button>
+          <span id="sonarr-spinner" class="htmx-indicator muted small">Testing…</span>
+          <span id="sonarr-status"></span>
+        </div>
+      </div>
+    </section>
+
+    {# ── Lidarr ──────────────────────────────────────────────────────── #}
+    <section class="card">
+      <header class="card-header">
+        <div class="service-head">
+          <span class="service-dot lidarr"></span>
+          <h2>Lidarr</h2>
+          <span class="kind-tag">optional</span>
+        </div>
+        <p>Artists, albums, tracks</p>
+      </header>
+      <div class="card-body card-body-stack">
+        <label class="field">
+          <span class="field-label">URL</span>
+          <input class="input mono" type="text" name="lidarr_url" id="lidarr_url"
+                 value="{{ lidarr_url }}" placeholder="http://lidarr:8686" />
+        </label>
+        <label class="field">
+          <span class="field-label">API Key</span>
+          <input class="input mono" type="password" name="lidarr_api_key" id="lidarr_api_key"
+                 value="{{ lidarr_api_key }}" placeholder="Paste API key" autocomplete="off" />
+        </label>
+        <div class="row gap-sm align-center">
+          <button type="button" class="btn btn-secondary btn-sm"
+            hx-post="/settings/test/lidarr"
+            hx-include="#lidarr_url, #lidarr_api_key"
+            hx-target="#lidarr-status"
+            hx-indicator="#lidarr-spinner">
+            <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5.5 1.5v3M10.5 1.5v3M4 4.5h8v3a4 4 0 0 1-8 0v-3zM8 11.5v3"/></svg></span>
+            Test connection
+          </button>
+          <span id="lidarr-spinner" class="htmx-indicator muted small">Testing…</span>
+          <span id="lidarr-status"></span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  {# ── Behaviour ────────────────────────────────────────────────────── #}
+  <section class="card">
+    <header class="card-header">
+      <h2>Behaviour</h2>
+      <p>How Selectarr handles deletions across services.</p>
+    </header>
+    <div class="card-body card-body-stack">
+      <label class="toggle">
+        <input type="checkbox" name="dry_run" {% if dry_run %}checked{% endif %} />
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        <span class="toggle-text">
+          <span class="toggle-label">Dry-run mode</span>
+          <span class="toggle-hint">Simulate every deletion without touching any files. Recommended while you tune filters.</span>
+        </span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" name="add_import_exclusion" {% if add_import_exclusion %}checked{% endif %} />
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        <span class="toggle-text">
+          <span class="toggle-label">Add to import exclusion list</span>
+          <span class="toggle-hint">Prevent deleted items from being re-downloaded by Radarr / Sonarr / Lidarr.</span>
+        </span>
+      </label>
+    </div>
+  </section>
+
+  <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+    <button type="submit" class="btn btn-primary">Save settings</button>
+  </div>
+
+</form>
+{% endblock %}

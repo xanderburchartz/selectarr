@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  selectarr:
+    build: .
+    # Or use a pre-built image:
+    # image: ghcr.io/yourname/selectarr:latest
+    container_name: selectarr
+    restart: unless-stopped
+    ports:
+      - "8889:8889"
+    volumes:
+      # Mount your config directory; must contain config.yaml
+      - ./config:/config
+    environment:
+      - TZ=Europe/Amsterdam
+    # Optional: connect to the same Docker network as your *arr stack
+    # networks:
+    #   - arr-net
+
+# networks:
+#   arr-net:
+#     external: true

@@ -1,0 +1,121 @@
+<div id="stats-section"
+     hx-get="/stats"
+     hx-trigger="every 30m"
+     hx-target="#stats-section"
+     hx-swap="outerHTML">
+
+  <div class="stat-total-banner">
+    <div class="stat-total-value">{{ stats.total_gb }} GB</div>
+    <div class="stat-total-label">Total library size</div>
+  </div>
+
+  <div class="stats-grid">
+
+    {# ── Movies ── #}
+    {% set m = stats.movies %}
+    <div class="card">
+      <div class="card-header">
+        <div class="service-head">
+          <span class="service-dot radarr"></span>
+          <h2>Movies</h2>
+          <span class="kind-tag">Radarr</span>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if m is none %}
+          <p class="muted small">Not configured.</p>
+        {% elif m.get('error') %}
+          <p class="muted small">Service unavailable.</p>
+        {% else %}
+          <div class="stat-line"><span class="stat-line-label">Downloaded</span><strong class="mono">{{ m.count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">Total size</span><strong class="mono">{{ m.size_gb }} GB</strong></div>
+          <div class="stat-line">
+            <span class="stat-line-label">Last added</span>
+            {% if m.last_added %}
+              <span class="small" style="text-align:right">{{ m.last_added.title }}<br><span class="muted">{{ m.last_added.date }}</span></span>
+            {% else %}<span class="muted small">—</span>{% endif %}
+          </div>
+          <div class="stat-line">
+            <span class="stat-line-label">Last deleted</span>
+            {% if m.last_deleted %}
+              <span class="small" style="text-align:right">{{ m.last_deleted.title }}<br><span class="muted">{{ m.last_deleted.date }}</span></span>
+            {% else %}<span class="muted small">—</span>{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── Series ── #}
+    {% set s = stats.series %}
+    <div class="card">
+      <div class="card-header">
+        <div class="service-head">
+          <span class="service-dot sonarr"></span>
+          <h2>Series</h2>
+          <span class="kind-tag">Sonarr</span>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if s is none %}
+          <p class="muted small">Not configured.</p>
+        {% elif s.get('error') %}
+          <p class="muted small">Service unavailable.</p>
+        {% else %}
+          <div class="stat-line"><span class="stat-line-label">Series</span><strong class="mono">{{ s.count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">Seasons</span><strong class="mono">{{ s.season_count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">Episodes downloaded</span><strong class="mono">{{ s.episode_count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">Total size</span><strong class="mono">{{ s.size_gb }} GB</strong></div>
+          <div class="stat-line">
+            <span class="stat-line-label">Last added</span>
+            {% if s.last_added %}
+              <span class="small" style="text-align:right">{{ s.last_added.title }}<br><span class="muted">{{ s.last_added.date }}</span></span>
+            {% else %}<span class="muted small">—</span>{% endif %}
+          </div>
+          <div class="stat-line">
+            <span class="stat-line-label">Last deleted</span>
+            {% if s.last_deleted %}
+              <span class="small" style="text-align:right">{{ s.last_deleted.title }}<br><span class="muted">{{ s.last_deleted.date }}</span></span>
+            {% else %}<span class="muted small">—</span>{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── Music ── #}
+    {% set mu = stats.music %}
+    <div class="card">
+      <div class="card-header">
+        <div class="service-head">
+          <span class="service-dot lidarr"></span>
+          <h2>Music</h2>
+          <span class="kind-tag">Lidarr</span>
+        </div>
+      </div>
+      <div class="card-body">
+        {% if mu is none %}
+          <p class="muted small">Not configured.</p>
+        {% elif mu.get('error') %}
+          <p class="muted small">Service unavailable.</p>
+        {% else %}
+          <div class="stat-line"><span class="stat-line-label">Artists</span><strong class="mono">{{ mu.artist_count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">Albums</span><strong class="mono">{{ mu.album_count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">Track files</span><strong class="mono">{{ mu.track_count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">Total size</span><strong class="mono">{{ mu.size_gb }} GB</strong></div>
+          <div class="stat-line">
+            <span class="stat-line-label">Last added</span>
+            {% if mu.last_added %}
+              <span class="small" style="text-align:right">{{ mu.last_added.title }}<br><span class="muted">{{ mu.last_added.date }}</span></span>
+            {% else %}<span class="muted small">—</span>{% endif %}
+          </div>
+          <div class="stat-line">
+            <span class="stat-line-label">Last deleted</span>
+            {% if mu.last_deleted %}
+              <span class="small" style="text-align:right">{{ mu.last_deleted.title }}<br><span class="muted">{{ mu.last_deleted.date }}</span></span>
+            {% else %}<span class="muted small">—</span>{% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>

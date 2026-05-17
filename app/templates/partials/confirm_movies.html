@@ -1,0 +1,82 @@
+<header class="drawer-header">
+  <div>
+    <div class="drawer-eyebrow">{% if dry_run %}Dry-run preview{% else %}Confirm deletion{% endif %}</div>
+    <h2>Review before delete</h2>
+  </div>
+  <button class="icon-btn" onclick="closeDrawer()" aria-label="Close">
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+  </button>
+</header>
+
+<div class="drawer-body">
+  {% if dry_run %}
+  <div class="banner banner-warning">
+    <span class="banner-icon" aria-hidden="true">!</span>
+    <div class="banner-body">
+      <strong>Dry-run mode is on.</strong>
+      <span>No files will be touched. This shows what <em>would</em> happen.</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="banner banner-error">
+    <span class="banner-icon" aria-hidden="true">!</span>
+    <div class="banner-body">
+      <strong>This will permanently delete files.</strong>
+      <span>Files are removed from disk by Radarr. This cannot be undone.</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="drawer-stat-row">
+    <div class="stat">
+      <div class="stat-label">Scope</div>
+      <div class="stat-value">movies</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Items</div>
+      <div class="stat-value mono">{{ selected|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">{% if dry_run %}Would free{% else %}Will free{% endif %}</div>
+      <div class="stat-value mono">
+        {%- set ns = namespace(total=0) -%}
+        {%- for m in selected -%}{%- set ns.total = ns.total + (m.sizeOnDisk or 0) -%}{%- endfor -%}
+        {%- if ns.total >= 1073741824 -%}{{ (ns.total / 1073741824) | round(1) }} GB
+        {%- elif ns.total > 0 -%}{{ (ns.total / 1048576) | int }} MB
+        {%- else -%}—{%- endif -%}
+      </div>
+    </div>
+  </div>
+
+  <h3 class="drawer-section-title">Items</h3>
+  <ul class="drawer-list">
+    {% for movie in selected %}
+    <li>
+      <span class="title-cell">{{ movie.title }} ({{ movie.get('year', '?') }})</span>
+      <span class="mono muted">
+        {%- if movie.sizeOnDisk and movie.sizeOnDisk >= 1073741824 -%}{{ (movie.sizeOnDisk / 1073741824) | round(1) }} GB
+        {%- elif movie.sizeOnDisk -%}{{ (movie.sizeOnDisk / 1048576) | int }} MB
+        {%- else -%}—{%- endif -%}
+      </span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <form id="confirm-movies-form">
+    {% for rid in radarr_ids %}
+    <input type="hidden" name="radarr_ids" value="{{ rid }}" />
+    {% endfor %}
+  </form>
+</div>
+
+<footer class="drawer-footer">
+  <button type="button" class="btn btn-secondary" onclick="closeDrawer()">Cancel</button>
+  <button type="button" class="btn btn-danger"
+    hx-post="/movies/delete"
+    hx-include="#confirm-movies-form"
+    hx-target="#delete-area"
+    hx-swap="innerHTML">
+    <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
+    {% if dry_run %}Run simulation{% else %}Delete now{% endif %}
+  </button>
+</footer>

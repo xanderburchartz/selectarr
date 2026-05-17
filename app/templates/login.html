@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in — Selectarr</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/selectarr.css" />
+</head>
+<body class="login-body">
+<div class="login-shell">
+  <div class="login-card">
+    <div class="login-brand">
+      <img src="/static/img/logo.svg" alt="" class="login-logo">
+      <span class="login-title">Selectarr</span>
+    </div>
+    <p class="login-subtitle">Sign in with your Jellyfin account</p>
+
+    {% if error %}
+    <div class="banner banner-error">
+      <span class="banner-icon" aria-hidden="true">!</span>
+      <div class="banner-body"><span>{{ error }}</span></div>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/login" class="login-form">
+      <div class="field">
+        <label class="field-label" for="username">Username</label>
+        <input class="input" id="username" name="username" type="text"
+          autocomplete="username" required autofocus />
+      </div>
+      <div class="field">
+        <label class="field-label" for="password">Password</label>
+        <input class="input" id="password" name="password" type="password"
+          autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn btn-primary login-submit">Sign in</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>
