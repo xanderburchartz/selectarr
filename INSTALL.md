@@ -22,20 +22,15 @@ docker compose version
 
 Both commands should print a version number. If you see "command not found", Docker is not installed correctly.
 
-**Git**  
-To download the Selectarr source code. Most systems have this already.  
-Check with `git --version`. If missing, download from https://git-scm.com/downloads.
-
 ---
 
-### Step 1 — Download Selectarr
-
-Open a terminal and run:
+### Step 1 — Download the compose file
 
 ```bash
-git clone https://github.com/yourusername/selectarr.git
-cd selectarr
+curl -O https://raw.githubusercontent.com/xanderburchartz/selectarr/main/docker-compose.yml
 ```
+
+Or [download it manually](https://github.com/xanderburchartz/selectarr/blob/main/docker-compose.yml) and place it in a new folder called `selectarr`.
 
 ---
 
@@ -55,7 +50,7 @@ That's all — no need to edit any files manually. Selectarr will write its conf
 docker compose up -d
 ```
 
-Docker builds the image and starts the container in the background. The first run takes about 30–60 seconds while it downloads the Python base image.
+Docker pulls the pre-built image from `ghcr.io/xanderburchartz/selectarr:latest` and starts the container in the background. The first run takes about 15–30 seconds while it downloads the image.
 
 To watch the startup logs:
 
@@ -130,7 +125,7 @@ If you see `Python 3.11.x` or higher, you're ready. If not, download Python from
 ### Step 1 — Download Selectarr
 
 ```bash
-git clone https://github.com/yourusername/selectarr.git
+git clone https://github.com/xanderburchartz/selectarr.git
 cd selectarr
 ```
 
@@ -272,7 +267,6 @@ Open Settings and toggle **Dry-run mode** off, then click **Save settings**.
 **How do I update to a newer version?**
 
 ```bash
-git pull
-docker compose down
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
