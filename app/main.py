@@ -107,42 +107,59 @@ async def unhandled_exception(request: Request, exc: Exception) -> HTMLResponse:
 
 
 @app.get("/status", summary="Health check and configuration status")
-async def status():
-    """Return service connectivity status."""
+async def status(request: Request, format: str = ""):
+    """Return service connectivity status as HTML (browser) or JSON (API clients)."""
     from app.services.radarr import RadarrService
     from app.services.sonarr import SonarrService
     from app.services.lidarr import LidarrService
     from app.services.jellyfin import JellyfinService
 
     if not is_config_complete():
-        return {"configured": False}
+        data: dict = {"configured": False}
+        if _wants_html(request, format):
+            return templates.TemplateResponse(
+                request, "status.html",
+                {"version": __version__, "configured": False, "dry_run": False, "services": {
+                    "jellyfin": {"status": "not configured"},
+                    "radarr":   {"status": "not configured"},
+                    "sonarr":   {"status": "not configured"},
+                    "lidarr":   {"status": "not configured"},
+                }},
+            )
+        return data
 
     config = get_config()
-    result: dict = {"configured": True, "dry_run": config.dry_run}
+    services: dict = {}
 
     jf = JellyfinService(config.jellyfin.url, config.jellyfin.api_key)
     try:
         users = await jf.get_users()
-        result["jellyfin"] = {"status": "ok", "users": len(users)}
+        services["jellyfin"] = {"status": "ok", "users": len(users)}
     except Exception as exc:
-        result["jellyfin"] = {"status": "error", "message": str(exc)}
+        services["jellyfin"] = {"status": "error", "message": str(exc)}
 
-    if config.radarr:
-        ok = await RadarrService(config.radarr.url, config.radarr.api_key).health_check()
-        result["radarr"] = {"status": "ok" if ok else "error"}
-    else:
-        result["radarr"] = {"status": "not configured"}
+    for name, svc_cfg, Svc in [
+        ("radarr",  config.radarr,  RadarrService),
+        ("sonarr",  config.sonarr,  SonarrService),
+        ("lidarr",  config.lidarr,  LidarrService),
+    ]:
+        if svc_cfg:
+            ok = await Svc(svc_cfg.url, svc_cfg.api_key).health_check()
+            services[name] = {"status": "ok" if ok else "error"}
+        else:
+            services[name] = {"status": "not configured"}
 
-    if config.sonarr:
-        ok = await SonarrService(config.sonarr.url, config.sonarr.api_key).health_check()
-        result["sonarr"] = {"status": "ok" if ok else "error"}
-    else:
-        result["sonarr"] = {"status": "not configured"}
+    if _wants_html(request, format):
+        return templates.TemplateResponse(
+            request, "status.html",
+            {"version": __version__, "configured": True, "dry_run": config.dry_run, "services": services},
+        )
 
-    if config.lidarr:
-        ok = await LidarrService(config.lidarr.url, config.lidarr.api_key).health_check()
-        result["lidarr"] = {"status": "ok" if ok else "error"}
-    else:
-        result["lidarr"] = {"status": "not configured"}
+    return {"configured": True, "dry_run": config.dry_run, **services}
 
-    return result
+
+def _wants_html(request: Request, format: str) -> bool:
+    if format == "json":
+        return False
+    accept = request.headers.get("accept", "")
+    return "text/html" in accept
