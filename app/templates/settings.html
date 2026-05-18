@@ -38,6 +38,9 @@
         <p>Watch-status source</p>
       </header>
       <div class="card-body card-body-stack">
+        {% if discovery %}
+        <div class="field-hint" style="margin-bottom:6px;">Jellyfin credentials cannot be auto-discovered — enter them manually.</div>
+        {% endif %}
         <label class="field">
           <span class="field-label">URL</span>
           <input class="input mono" type="text" name="jellyfin_url" id="jellyfin_url"
@@ -72,6 +75,12 @@
           <span class="service-dot radarr"></span>
           <h2>Radarr</h2>
           <span class="kind-tag">optional</span>
+          {% if discovery and discovery.radarr %}
+            {% if discovery.radarr.status == "discovered" %}<span class="pill pill-success" style="font-size:10px;">Auto-discovered</span>
+            {% elif discovery.radarr.status == "not_found" %}<span class="pill pill-muted" style="font-size:10px;">Config file not found</span>
+            {% elif discovery.radarr.status == "parse_error" %}<span class="pill pill-danger" style="font-size:10px;">Could not parse config</span>
+            {% endif %}
+          {% endif %}
         </div>
         <p>Movies</p>
       </header>
@@ -108,6 +117,12 @@
           <span class="service-dot sonarr"></span>
           <h2>Sonarr</h2>
           <span class="kind-tag">optional</span>
+          {% if discovery and discovery.sonarr %}
+            {% if discovery.sonarr.status == "discovered" %}<span class="pill pill-success" style="font-size:10px;">Auto-discovered</span>
+            {% elif discovery.sonarr.status == "not_found" %}<span class="pill pill-muted" style="font-size:10px;">Config file not found</span>
+            {% elif discovery.sonarr.status == "parse_error" %}<span class="pill pill-danger" style="font-size:10px;">Could not parse config</span>
+            {% endif %}
+          {% endif %}
         </div>
         <p>Series, seasons, episodes</p>
       </header>
@@ -144,6 +159,12 @@
           <span class="service-dot lidarr"></span>
           <h2>Lidarr</h2>
           <span class="kind-tag">optional</span>
+          {% if discovery and discovery.lidarr %}
+            {% if discovery.lidarr.status == "discovered" %}<span class="pill pill-success" style="font-size:10px;">Auto-discovered</span>
+            {% elif discovery.lidarr.status == "not_found" %}<span class="pill pill-muted" style="font-size:10px;">Config file not found</span>
+            {% elif discovery.lidarr.status == "parse_error" %}<span class="pill pill-danger" style="font-size:10px;">Could not parse config</span>
+            {% endif %}
+          {% endif %}
         </div>
         <p>Artists, albums, tracks</p>
       </header>

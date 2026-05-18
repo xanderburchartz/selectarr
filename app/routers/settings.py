@@ -7,6 +7,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.config import load_raw_config, save_config
+from app.services.discovery import discover_all
 from app.services.jellyfin import JellyfinService
 from app.services.radarr import RadarrService
 from app.services.sonarr import SonarrService
@@ -47,19 +48,33 @@ def _require_admin(request: Request) -> bool:
 
 @router.get("", response_class=HTMLResponse)
 async def settings_page(request: Request, saved: bool = False, error: str = ""):
-    """Render the settings form, pre-populated from the current config."""
+    """Render the settings form, pre-populated from config and auto-discovery."""
     if not _require_admin(request):
         return templates.TemplateResponse(
             request, "error.html",
             {"message": "Settings are only accessible to Jellyfin administrators."},
             status_code=403,
         )
+    from app.config import is_config_complete
     raw = load_raw_config()
     form_values = _raw_to_form(raw)
+
+    # Auto-discover *arr credentials from mounted config.xml files when not yet configured.
+    discovery: dict = {}
+    if not is_config_complete():
+        discovered = discover_all()
+        for name, result in discovered.items():
+            discovery[name] = {"status": result.status, "url": result.url, "api_key": result.api_key}
+            if result.status == "discovered":
+                if not form_values.get(f"{name}_url"):
+                    form_values[f"{name}_url"] = result.url
+                if not form_values.get(f"{name}_api_key"):
+                    form_values[f"{name}_api_key"] = result.api_key
+
     return templates.TemplateResponse(
         request,
         "settings.html",
-        {"saved": saved, "error": error, **form_values},
+        {"saved": saved, "error": error, "discovery": discovery, **form_values},
     )
 
 

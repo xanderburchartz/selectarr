@@ -10,6 +10,11 @@ services:
     volumes:
       # Mount your config directory; must contain config.yaml
       - ./config:/config
+      # Optional: mount *arr config directories for auto-discovery of API keys.
+      # Replace the left-hand paths with the actual locations on your host.
+      - /path/to/radarr/config:/arr/radarr:ro
+      - /path/to/sonarr/config:/arr/sonarr:ro
+      - /path/to/lidarr/config:/arr/lidarr:ro
     environment:
       - TZ=Europe/Amsterdam
     # Optional: connect to the same Docker network as your *arr stack
