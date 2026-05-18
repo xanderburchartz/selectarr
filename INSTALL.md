@@ -70,7 +70,19 @@ INFO:     Uvicorn running on http://0.0.0.0:8889 (Press CTRL+C to quit)
 
 Open **http://localhost:8889** in your browser. Selectarr will redirect you to the **Settings** page automatically on first run.
 
-Fill in the URL and API key for each service you use:
+**Auto-discovery** — if you mount your Radarr, Sonarr, and Lidarr config directories into the container (see below), Selectarr reads their `config.xml` files on first open and pre-fills the URL and API key fields for you. Each service card shows an **Auto-discovered** badge when this succeeds. Jellyfin cannot be auto-discovered and always requires manual entry.
+
+To enable auto-discovery, add these volume mounts to `docker-compose.yml` before starting the container, replacing the paths with the actual locations on your host:
+
+```yaml
+volumes:
+  - ./config:/config
+  - /path/to/radarr/config:/arr/radarr:ro
+  - /path/to/sonarr/config:/arr/sonarr:ro
+  - /path/to/lidarr/config:/arr/lidarr:ro
+```
+
+Without the mounts, fill in the URL and API key for each service manually:
 
 | Service | Default URL | Where to find the API key |
 |---------|-------------|--------------------------|
