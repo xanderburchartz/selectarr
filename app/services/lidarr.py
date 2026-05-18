@@ -58,13 +58,32 @@ class LidarrService:
 
     async def get_album_title(self, album_id: int) -> str:
         """Return the title of a single album by its ID."""
+        info = await self.get_album_info(album_id)
+        return info["title"]
+
+    async def get_album_info(self, album_id: int) -> dict:
+        """Return title and sizeOnDisk for a single album."""
         async with _client(self.url, self.api_key) as client:
             resp = await client.get("/api/v1/album", params={"albumId": album_id})
             resp.raise_for_status()
             data = resp.json()
             if data:
-                return data[0].get("title", f"Album {album_id}")
-            return f"Album {album_id}"
+                a = data[0]
+                return {
+                    "title": a.get("title", f"Album {album_id}"),
+                    "size": a.get("statistics", {}).get("sizeOnDisk", 0),
+                }
+            return {"title": f"Album {album_id}", "size": 0}
+
+    async def get_track_files_by_ids(self, track_file_ids: list[int]) -> list[dict]:
+        """Return track file objects for the given IDs."""
+        async with _client(self.url, self.api_key) as client:
+            resp = await client.get(
+                "/api/v1/trackfile",
+                params=[("trackFileIds", fid) for fid in track_file_ids],
+            )
+            resp.raise_for_status()
+            return resp.json()
 
     async def get_album_track_files(self, album_id: int) -> list[dict]:
         """Return all track file objects for a specific album (includes size)."""
@@ -121,7 +140,8 @@ class LidarrService:
         if not track_file_ids:
             return
         async with _client(self.url, self.api_key) as client:
-            resp = await client.delete(
+            resp = await client.request(
+                "DELETE",
                 "/api/v1/trackfile/bulk",
                 json={"trackFileIds": track_file_ids},
             )

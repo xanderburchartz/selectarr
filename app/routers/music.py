@@ -326,11 +326,7 @@ async def music_confirm(
     effective_artists = artist_ids if artist_ids else ([artist_id] if artist_id else [])
     effective_albums = album_ids if album_ids else ([album_id] if album_id else [])
 
-    async def _album_title(aid: int) -> str:
-        try:
-            return await lidarr.get_album_title(aid)
-        except Exception:
-            return f"Album {aid}"
+    freed_bytes = 0
 
     if action == "artist" and effective_artists:
         try:
@@ -338,22 +334,59 @@ async def music_confirm(
         except httpx.HTTPError as exc:
             return HTMLResponse(error_html(classify_error("Lidarr", exc)))
         name_map = {a["id"]: a["artistName"] for a in raw}
+        size_map = {a["id"]: a.get("statistics", {}).get("sizeOnDisk", 0) for a in raw}
         items = [name_map.get(aid, f"Artist ID {aid}") for aid in effective_artists]
+        freed_bytes = sum(size_map.get(aid, 0) for aid in effective_artists)
     elif action == "album" and effective_albums:
-        items = list(await asyncio.gather(*[_album_title(aid) for aid in effective_albums]))
+        album_results = await asyncio.gather(
+            *[lidarr.get_album_info(aid) for aid in effective_albums],
+            return_exceptions=True,
+        )
+        items = []
+        for aid, result in zip(effective_albums, album_results):
+            if isinstance(result, Exception):
+                items.append(f"Album {aid}")
+            else:
+                items.append(result["title"])
+                freed_bytes += result["size"]
     elif action == "mixed":
         artist_items: list[str] = []
         if effective_artists:
             try:
                 raw = await lidarr.get_artists()
                 name_map = {a["id"]: a["artistName"] for a in raw}
+                size_map = {a["id"]: a.get("statistics", {}).get("sizeOnDisk", 0) for a in raw}
                 artist_items = [name_map.get(aid, f"Artist ID {aid}") for aid in effective_artists]
+                freed_bytes += sum(size_map.get(aid, 0) for aid in effective_artists)
             except httpx.HTTPError:
                 artist_items = [f"Artist ID {aid}" for aid in effective_artists]
-        album_items = list(await asyncio.gather(*[_album_title(aid) for aid in effective_albums])) if effective_albums else []
+        album_items: list[str] = []
+        if effective_albums:
+            album_results = await asyncio.gather(
+                *[lidarr.get_album_info(aid) for aid in effective_albums],
+                return_exceptions=True,
+            )
+            for aid, result in zip(effective_albums, album_results):
+                if isinstance(result, Exception):
+                    album_items.append(f"Album {aid}")
+                else:
+                    album_items.append(result["title"])
+                    freed_bytes += result["size"]
+        if track_file_ids:
+            try:
+                track_files = await lidarr.get_track_files_by_ids(track_file_ids)
+                freed_bytes += sum(f.get("size", 0) for f in track_files)
+            except Exception:
+                pass
         track_items = [f"{len(track_file_ids)} individual track(s)"] if track_file_ids else []
         items = artist_items + album_items + track_items
     else:
+        if track_file_ids:
+            try:
+                track_files = await lidarr.get_track_files_by_ids(track_file_ids)
+                freed_bytes += sum(f.get("size", 0) for f in track_files)
+            except Exception:
+                pass
         items = [f"{len(track_file_ids)} track file(s)"]
 
     return templates.TemplateResponse(
@@ -366,6 +399,7 @@ async def music_confirm(
             "album_ids": effective_albums,
             "track_file_ids": track_file_ids,
             "dry_run": config.dry_run,
+            "freed_bytes": freed_bytes,
         },
     )
 
@@ -503,7 +537,9 @@ async def music_delete(
                 await log_action("music", t, "track", dry_run=False, success=False, details=msg)
 
         if any_success:
-            rescan_id = effective_artists[0] if effective_artists else artist_id
+            # Skip rescan when artists were fully deleted from Lidarr — they no longer exist.
+            # RescanArtist on a deleted artist returns 500. Jellyfin refresh still runs.
+            rescan_id = None if (action == "artist" or effective_artists) else artist_id
             background_tasks.add_task(_refresh_after_music_delete, config, rescan_id, results[0].title if results else "")
 
     delete_result = DeleteResult(

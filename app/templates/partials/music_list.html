@@ -25,7 +25,6 @@
             aria-label="Sort by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
         </th>
         <th class="col-watched">Listened</th>
-        <th class="col-actions"></th>
       </tr>
     </thead>
     <tbody>
@@ -73,19 +72,9 @@
             <span class="muted small">—</span>
           {% endif %}
         </td>
-        <td class="col-actions">
-          <button class="btn btn-ghost-danger btn-sm" type="button"
-            hx-post="/music/confirm"
-            hx-vals='{"action":"artist","artist_id":{{ artist.lidarr_id }}}'
-            hx-target="#delete-area"
-            hx-swap="innerHTML">
-            <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-            Delete artist
-          </button>
-        </td>
       </tr>
       <tr class="row-nested">
-        <td colspan="7" style="padding:0;">
+        <td colspan="6" style="padding:0;">
           <div id="expand-a{{ artist.lidarr_id }}"></div>
         </td>
       </tr>
@@ -98,7 +87,7 @@
       hx-target="#delete-area"
       hx-swap="innerHTML">
       <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-      Delete selected
+      <span class="ar-del-label">Delete selected</span>
     </button>
   </div>
 </div>
@@ -241,6 +230,16 @@
     if (artistIds.length) params['artist_ids']    = artistIds;
     if (albumIds.length)  params['album_ids']      = albumIds;
     if (trkFileIds.length) params['track_file_ids'] = trkFileIds;
+  });
+
+  var _delBtnLabel = delBtn.querySelector('.ar-del-label');
+  delBtn.addEventListener('htmx:beforeRequest', function () {
+    delBtn.disabled = true;
+    _delBtnLabel.textContent = 'Loading…';
+  });
+  delBtn.addEventListener('htmx:afterRequest', function () {
+    _delBtnLabel.textContent = 'Delete selected';
+    updateUI();
   });
 
   updateUI();

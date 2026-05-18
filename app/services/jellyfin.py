@@ -80,6 +80,16 @@ class JellyfinService:
             resp.raise_for_status()
             return resp.json().get("Items", [])
 
+    async def _get_all_series(self, user_id: str) -> list[dict]:
+        """Fetch and cache all series items for a user (includes UserData and Id)."""
+        cache_key = f"jf_series_items_{user_id}"
+        cached = _cached(cache_key)
+        if cached is not None:
+            return cached
+        items = await self._get_items(user_id, "Series")
+        _cached(cache_key, items)
+        return items
+
     async def get_watched_movies(self, user_id: str) -> dict[str, bool]:
         """Return {tmdb_id: watched} for all movies visible to user_id."""
         cache_key = f"jf_movies_{user_id}"
@@ -98,23 +108,113 @@ class JellyfinService:
         return result
 
     async def get_watched_series(self, user_id: str) -> dict[str, bool]:
-        """Return {tvdb_id: played_percentage_dict} for all series."""
-        cache_key = f"jf_series_{user_id}"
-        cached = _cached(cache_key)
-        if cached is not None:
-            return cached
-
-        items = await self._get_items(user_id, "Series")
+        """Return {tvdb_id: fully_watched} for all series visible to user_id."""
+        items = await self._get_all_series(user_id)
         result = {}
         for item in items:
             tvdb_id = item.get("ProviderIds", {}).get("Tvdb")
             if tvdb_id:
-                user_data = item.get("UserData", {})
-                played = user_data.get("Played", False)
-                played_pct = user_data.get("PlayedPercentage", 0)
-                # Consider fully watched if Played=True or >95% complete
-                result[tvdb_id] = played or played_pct >= 95
+                ud = item.get("UserData", {})
+                played = ud.get("Played", False)
+                pct = ud.get("PlayedPercentage", 0) or 0
+                result[tvdb_id] = played or pct >= 95
+        return result
 
+    async def _get_episode_stats_by_series(self, user_id: str) -> dict[str, dict]:
+        """Return {jf_series_id: {played: int, total: int}} by aggregating all episodes.
+
+        Uses SeriesId field on episode items — more reliable than season/series
+        UserData.PlayedPercentage which Jellyfin may not update promptly.
+        """
+        cache_key = f"jf_ep_stats_{user_id}"
+        cached = _cached(cache_key)
+        if cached is not None:
+            return cached
+        items = await self._get_items(
+            user_id, "Episode",
+            extra_params={"Fields": "UserData,SeriesId"},
+        )
+        result: dict[str, dict] = {}
+        for item in items:
+            sid = item.get("SeriesId")
+            if not sid:
+                continue
+            if sid not in result:
+                result[sid] = {"played": 0, "total": 0}
+            result[sid]["total"] += 1
+            if item.get("UserData", {}).get("Played", False):
+                result[sid]["played"] += 1
+        _cached(cache_key, result)
+        return result
+
+    async def get_series_partial_watch(self, user_id: str) -> dict[str, bool]:
+        """Return {tvdb_id: is_partial} computed from episode-level watch data.
+
+        Aggregates episode Played flags rather than relying on the series-level
+        PlayedPercentage, which Jellyfin may not recalculate promptly.
+        """
+        series_items = await self._get_all_series(user_id)
+        ep_stats = await self._get_episode_stats_by_series(user_id)
+
+        jf_id_to_tvdb = {
+            item["Id"]: item["ProviderIds"]["Tvdb"]
+            for item in series_items
+            if item.get("Id") and item.get("ProviderIds", {}).get("Tvdb")
+        }
+        result = {}
+        for jf_id, tvdb_id in jf_id_to_tvdb.items():
+            stats = ep_stats.get(jf_id, {})
+            total = stats.get("total", 0)
+            played = stats.get("played", 0)
+            result[tvdb_id] = 0 < played < total
+        return result
+
+    async def get_jellyfin_series_id(self, user_id: str, tvdb_id: str) -> Optional[str]:
+        """Return Jellyfin internal item ID for a series identified by TVDB ID."""
+        items = await self._get_all_series(user_id)
+        for item in items:
+            if item.get("ProviderIds", {}).get("Tvdb") == tvdb_id:
+                return item.get("Id")
+        return None
+
+    async def get_season_watch_stats(
+        self, user_id: str, jellyfin_series_id: str
+    ) -> dict[int, dict]:
+        """Return {season_number: {played: int, total: int}} aggregated from episodes.
+
+        Aggregates episode Played flags rather than relying on season-level
+        PlayedPercentage, which Jellyfin may not recalculate promptly.
+        """
+        ewd = await self.get_episode_watch_data(user_id, jellyfin_series_id)
+        result: dict[int, dict] = {}
+        for (sn, _en), played in ewd.items():
+            if sn not in result:
+                result[sn] = {"played": 0, "total": 0}
+            result[sn]["total"] += 1
+            if played:
+                result[sn]["played"] += 1
+        return result
+
+    async def get_episode_watch_data(
+        self, user_id: str, jellyfin_series_id: str
+    ) -> dict[tuple[int, int], bool]:
+        """Return {(season_number, episode_number): played} for all episodes of a series."""
+        cache_key = f"jf_episodes_{user_id}_{jellyfin_series_id}"
+        cached = _cached(cache_key)
+        if cached is not None:
+            return cached
+        items = await self._get_items(
+            user_id,
+            "Episode",
+            parent_id=jellyfin_series_id,
+            extra_params={"Fields": "UserData,ParentIndexNumber,IndexNumber"},
+        )
+        result = {}
+        for item in items:
+            sn = item.get("ParentIndexNumber")
+            en = item.get("IndexNumber")
+            if sn is not None and en is not None:
+                result[(sn, en)] = item.get("UserData", {}).get("Played", False)
         _cached(cache_key, result)
         return result
 
@@ -177,6 +277,17 @@ class JellyfinService:
                 result.setdefault(tvdb_id, {})[user.id] = played
         return result
 
+    async def build_series_partial_map(
+        self, users: list[UserInfo]
+    ) -> dict[str, dict[str, bool]]:
+        """Return {tvdb_id: {user_id: is_partial}} for all users."""
+        result: dict[str, dict[str, bool]] = {}
+        for user in users:
+            partial = await self.get_series_partial_watch(user.id)
+            for tvdb_id, is_partial in partial.items():
+                result.setdefault(tvdb_id, {})[user.id] = is_partial
+        return result
+
     async def authenticate_user(self, username: str, password: str) -> Optional[dict]:
         """Validate credentials against Jellyfin. Returns session dict or None."""
         auth_header = (
@@ -220,20 +331,25 @@ class JellyfinService:
                 result.setdefault(mb_id, {})[user.id] = played
         return result
 
-
 def make_watch_status_builder(users: list[UserInfo]):
     """Return a helper that builds a WatchStatus from a per-user dict."""
     from app.models import WatchStatus
 
     user_ids = [u.id for u in users]
 
-    def build(per_user: dict[str, bool]) -> WatchStatus:
+    def build(
+        per_user: dict[str, bool],
+        partial_per_user: dict[str, bool] | None = None,
+    ) -> WatchStatus:
+        if partial_per_user is None:
+            partial_per_user = {}
         watched = [per_user.get(uid, False) for uid in user_ids]
         return WatchStatus(
             watched_by_all=all(watched) if watched else False,
             watched_by_any=any(watched),
             watched_by_none=not any(watched),
             per_user=per_user,
+            partial_per_user={uid: True for uid in user_ids if partial_per_user.get(uid)},
         )
 
     return build

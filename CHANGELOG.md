@@ -2,6 +2,44 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.2] — 2026-05-18
+
+### Added
+
+- **Favicon** — browser tab now shows the Selectarr icon (SVG + ICO).
+- **Watch status on seasons and episodes** — expanding a series shows a
+  Watched column at season and episode level with per-user granularity.
+  Status is computed by aggregating episode-level `Played` flags from
+  Jellyfin rather than the unreliably-updated series/season
+  `PlayedPercentage`.
+- **Partial watch status** — series and seasons show `Name (partial)` per
+  user when some but not all episodes have been watched.
+- **Disk space in music deletion confirmation** — "Will free" now shows the
+  actual size of the selected artists, albums, or tracks instead of "—".
+- **Loading feedback on delete buttons** — "Delete selected" shows
+  "Loading…" while the confirmation request is in flight, preventing
+  double-submits.
+
+### Changed
+
+- **Unified watch status display** — movies, series, seasons, and episodes
+  now all use the same format: "Watched by all" / "Name, Name" /
+  "Name (partial)" / "Unwatched". The old "Watched by: Name" label on the
+  movies page is removed.
+- **Simplified delete UI on the series page** — removed per-row "Delete
+  series" and "Delete season" buttons; multi-select + "Delete selected" is
+  now the only delete path (consistent with the music page).
+- **Simplified delete UI on the music page** — removed the per-row "Delete
+  artist" button and the nested album-level "Delete selected" button.
+
+### Fixed
+
+- **Lidarr 500 error after artist deletion** — the background refresh task
+  no longer calls `RescanArtist` on a just-deleted artist. Jellyfin library
+  refresh still runs.
+
+---
+
 ## [0.2.1] — 2026-05-18
 
 ### Fixed

@@ -56,7 +56,12 @@ def _get_services(config=None):
     return jf, sonarr
 
 
-def _build_series_item(s: dict, per_user: dict[str, bool], build_ws) -> SeriesItem:
+def _build_series_item(
+    s: dict,
+    per_user: dict[str, bool],
+    partial_per_user: dict[str, bool],
+    build_ws,
+) -> SeriesItem:
     """Convert a raw Sonarr series dict to a SeriesItem."""
     seasons = []
     for season in s.get("seasons", []):
@@ -82,7 +87,7 @@ def _build_series_item(s: dict, per_user: dict[str, bool], build_ws) -> SeriesIt
         tvdb_id=s.get("tvdbId"),
         has_files=stats.get("episodeFileCount", 0) > 0,
         total_size_bytes=stats.get("sizeOnDisk", 0),
-        watch_status=build_ws(per_user) if per_user is not None else None,
+        watch_status=build_ws(per_user, partial_per_user) if per_user is not None else None,
         seasons=seasons,
     )
 
@@ -106,9 +111,11 @@ async def _build_series_list(
     try:
         users = await jf.get_users()
         watch_map = await jf.build_series_watch_map(users)
+        partial_map = await jf.build_series_partial_map(users)
     except httpx.HTTPError as exc:
         users = []
         watch_map = {}
+        partial_map = {}
         jellyfin_warning = classify_error("Jellyfin", exc)
 
     build_ws = make_watch_status_builder(users)
@@ -123,6 +130,7 @@ async def _build_series_list(
     for s in raw_series:
         tvdb_id = str(s.get("tvdbId", "")) or None
         per_user = watch_map.get(tvdb_id, {}) if tvdb_id else {}
+        partial_per_user = partial_map.get(tvdb_id, {}) if tvdb_id else {}
         watched = [per_user.get(uid, False) for uid in user_ids]
 
         if filter_type == "watched_all" and (not user_ids or not all(watched)):
@@ -135,7 +143,7 @@ async def _build_series_list(
             if not per_user.get(filter_user_id, False):
                 continue
 
-        result.append(_build_series_item(s, per_user, build_ws))
+        result.append(_build_series_item(s, per_user, partial_per_user, build_ws))
 
     result.sort(key=lambda s: s.title.lower())
     return result, users, FILTER_OPTIONS, jellyfin_warning
@@ -236,9 +244,9 @@ async def seasons_list(
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
 ):
-    """HTMX partial: seasons for a series with episode file counts."""
+    """HTMX partial: seasons for a series with episode file counts and watch status."""
     config = get_config()
-    sonarr = SonarrService(config.sonarr.url, config.sonarr.api_key)
+    jf, sonarr = _get_services(config)
 
     try:
         all_series = await sonarr.get_series()
@@ -248,6 +256,30 @@ async def seasons_list(
         episode_files = await sonarr.get_episode_files(sonarr_id)
     except httpx.HTTPError as exc:
         return HTMLResponse(error_html(classify_error("Sonarr", exc)))
+
+    tvdb_id = str(series.get("tvdbId", "")) or None
+
+    # Fetch Jellyfin episode watch data, aggregated per season.
+    # We aggregate from episodes (not season-level UserData) because Jellyfin may
+    # not update season/series PlayedPercentage promptly after episodes are watched.
+    users: list = []
+    # {season_num: {user_id: {played: int, total: int}}}
+    season_ep_stats: dict[int, dict[str, dict]] = {}
+    jf_series_id: Optional[str] = None
+    try:
+        users = await jf.get_users()
+        if tvdb_id and users:
+            jf_series_id = await jf.get_jellyfin_series_id(users[0].id, tvdb_id)
+            if jf_series_id:
+                for user in users:
+                    sw = await jf.get_season_watch_stats(user.id, jf_series_id)
+                    for sn, stats_data in sw.items():
+                        season_ep_stats.setdefault(sn, {})[user.id] = stats_data
+    except Exception:
+        pass
+
+    build_ws = make_watch_status_builder(users)
+    user_ids = [u.id for u in users]
 
     files_by_season: dict[int, list] = {}
     for f in episode_files:
@@ -264,12 +296,26 @@ async def seasons_list(
         if file_count == 0:
             continue
         stats = season.get("statistics", {})
+
+        per_user: dict[str, bool] = {}
+        partial_per_user: dict[str, bool] = {}
+        for uid in user_ids:
+            ep_stats = season_ep_stats.get(sn, {}).get(uid, {})
+            total = ep_stats.get("total", 0)
+            played = ep_stats.get("played", 0)
+            if total > 0 and played == total:
+                per_user[uid] = True
+            elif total > 0 and played > 0:
+                partial_per_user[uid] = True
+        ws = build_ws(per_user, partial_per_user) if users else None
+
         seasons.append(
             SeasonItem(
                 number=sn,
                 episode_count=stats.get("totalEpisodeCount", 0),
                 episode_file_count=file_count,
                 size_bytes=sum(f.get("size", 0) for f in season_files),
+                watch_status=ws,
             )
         )
 
@@ -284,7 +330,9 @@ async def seasons_list(
         {
             "series_id": sonarr_id,
             "series_title": series["title"],
+            "jf_series_id": jf_series_id or "",
             "seasons": seasons,
+            "users": users,
             "sort_by": sort_by,
             "sort_dir": sort_dir,
         },
@@ -292,11 +340,17 @@ async def seasons_list(
 
 
 @router.get("/{sonarr_id}/seasons/{season_number}/episodes", response_class=HTMLResponse)
-async def episodes_list(request: Request, sonarr_id: int, season_number: int,
-                        sort_by: Optional[str] = None, sort_dir: Optional[str] = None):
-    """HTMX partial: episodes for a specific season."""
+async def episodes_list(
+    request: Request,
+    sonarr_id: int,
+    season_number: int,
+    jf_series_id: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    sort_dir: Optional[str] = None,
+):
+    """HTMX partial: episodes for a specific season with watch status."""
     config = get_config()
-    sonarr = SonarrService(config.sonarr.url, config.sonarr.api_key)
+    jf, sonarr = _get_services(config)
 
     try:
         episodes_raw = await sonarr.get_episodes(sonarr_id)
@@ -304,22 +358,44 @@ async def episodes_list(request: Request, sonarr_id: int, season_number: int,
     except httpx.HTTPError as exc:
         return HTMLResponse(error_html(classify_error("Sonarr", exc)))
 
+    # Fetch Jellyfin episode watch data — graceful degradation on failure.
+    users: list = []
+    ep_watch: dict[tuple[int, int], dict[str, bool]] = {}
+    if jf_series_id:
+        try:
+            users = await jf.get_users()
+            for user in users:
+                ewd = await jf.get_episode_watch_data(user.id, jf_series_id)
+                for key, played in ewd.items():
+                    ep_watch.setdefault(key, {})[user.id] = played
+        except Exception:
+            pass
+
+    build_ws = make_watch_status_builder(users)
+    user_ids = [u.id for u in users]
     file_size_by_id = {f["id"]: f.get("size") for f in episode_files}
 
-    episodes = [
-        EpisodeItem(
-            sonarr_id=ep["id"],
-            episode_file_id=ep.get("episodeFileId") or None,
-            title=ep.get("title", "Unknown"),
-            season_number=ep["seasonNumber"],
-            episode_number=ep["episodeNumber"],
-            has_file=ep.get("hasFile", False),
-            file_size_bytes=file_size_by_id.get(ep.get("episodeFileId") or 0) or None,
-            air_date=ep.get("airDate"),
+    episodes = []
+    for ep in episodes_raw:
+        if ep.get("seasonNumber") != season_number:
+            continue
+        key = (ep["seasonNumber"], ep["episodeNumber"])
+        per_user = ep_watch.get(key, {})
+        ws = build_ws(per_user) if users and per_user else None
+        episodes.append(
+            EpisodeItem(
+                sonarr_id=ep["id"],
+                episode_file_id=ep.get("episodeFileId") or None,
+                title=ep.get("title", "Unknown"),
+                season_number=ep["seasonNumber"],
+                episode_number=ep["episodeNumber"],
+                has_file=ep.get("hasFile", False),
+                file_size_bytes=file_size_by_id.get(ep.get("episodeFileId") or 0) or None,
+                air_date=ep.get("airDate"),
+                watch_status=ws,
+            )
         )
-        for ep in episodes_raw
-        if ep.get("seasonNumber") == season_number
-    ]
+
     if sort_by == "size":
         episodes.sort(key=lambda e: e.file_size_bytes or 0, reverse=(sort_dir != "asc"))
     else:
@@ -330,6 +406,7 @@ async def episodes_list(request: Request, sonarr_id: int, season_number: int,
         "partials/episodes_list.html",
         {
             "episodes": episodes,
+            "users": users,
             "sonarr_id": sonarr_id,
             "season_number": season_number,
             "sort_by": sort_by,

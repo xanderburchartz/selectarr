@@ -18,7 +18,8 @@ class WatchStatus(BaseModel):
     watched_by_all: bool
     watched_by_any: bool
     watched_by_none: bool
-    per_user: dict[str, bool]  # user_id -> watched
+    per_user: dict[str, bool]  # user_id -> fully watched
+    partial_per_user: dict[str, bool] = {}  # user_id -> partially watched (not fully)
 
 
 class MovieItem(BaseModel):

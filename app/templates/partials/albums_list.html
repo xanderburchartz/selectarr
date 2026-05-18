@@ -30,7 +30,6 @@
               hx-swap="innerHTML"
               aria-label="Sort albums by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
           </th>
-          <th class="col-actions"></th>
         </tr>
       </thead>
       <tbody>
@@ -60,41 +59,21 @@
           <td class="col-year mono">{{ album.year or '—' }}</td>
           <td class="col-num mono">{{ album.track_count }}</td>
           <td class="col-size mono muted">{{ fmt_size(album.size_bytes) }}</td>
-          <td class="col-actions">
-            <button class="btn btn-ghost-danger btn-sm" type="button"
-              hx-post="/music/confirm"
-              hx-vals='{"action":"album","album_id":{{ album.lidarr_id }}}'
-              hx-target="#delete-area"
-              hx-swap="innerHTML">
-              <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-              Delete
-            </button>
-          </td>
         </tr>
         <tr class="row-nested">
-          <td colspan="7" style="padding:0;">
+          <td colspan="6" style="padding:0;">
             <div id="expand-al{{ album.lidarr_id }}"></div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    <div class="nested-action">
-      <button id="al-del-btn-{{ artist_id }}" type="button" class="btn btn-danger btn-sm" disabled
-        hx-post="/music/confirm"
-        hx-target="#delete-area"
-        hx-swap="innerHTML">
-        <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-        Delete selected
-      </button>
-    </div>
   </form>
   <script>
   (function () {
     var AID    = {{ artist_id }};
     var form   = document.getElementById('albums-form-' + AID);
     var allCb  = document.getElementById('cb-all-al' + AID);
-    var delBtn = document.getElementById('al-del-btn-' + AID);
     // album_id → [track_file_id, …] for indeterminate albums; persists across collapse
     var trkMap = {};
     var _suppressNotify = false;
@@ -166,7 +145,6 @@
       var hasAny  = cbs.some(function (c) { return c.checked || c.indeterminate; });
       var allFull = cbs.length > 0 && cbs.every(function (c) { return c.checked && !c.indeterminate; });
       var noneAny = cbs.every(function (c) { return !c.checked && !c.indeterminate; });
-      delBtn.disabled = !hasAny;
       if (allCb) {
         allCb.checked       = allFull;
         allCb.indeterminate = !noneAny && !allFull;
@@ -215,28 +193,6 @@
       trkCbs.forEach(function (c) {
         c.addEventListener('change', function () { updateAlbumCbFromTracks(albumId); });
       });
-    });
-
-    // Build request parameters from scratch when "Delete selected" is clicked.
-    delBtn.addEventListener('htmx:configRequest', function (e) {
-      var params = e.detail.parameters;
-      var fullAlbums = [], trkFileIds = [];
-      getAlbumCbs().forEach(function (cb) {
-        var albumId = parseInt(cb.value, 10);
-        if (cb.checked && !cb.indeterminate) {
-          fullAlbums.push(albumId);
-        } else if (cb.indeterminate) {
-          trkFileIds = trkFileIds.concat(trkMap[albumId] || []);
-        }
-      });
-      var action = trkFileIds.length === 0 ? 'album'
-                 : fullAlbums.length === 0 ? 'track'
-                 : 'mixed';
-      Object.keys(params).forEach(function (k) { delete params[k]; });
-      params['artist_id'] = String(AID);
-      params['action']    = action;
-      if (fullAlbums.length)  params['album_ids']      = fullAlbums;
-      if (trkFileIds.length)  params['track_file_ids'] = trkFileIds;
     });
 
     // --- API exposed to parent artist panel ---

@@ -23,7 +23,7 @@
               hx-swap="innerHTML"
               aria-label="Sort seasons by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
           </th>
-          <th class="col-actions"></th>
+          <th class="col-watched">Watched</th>
         </tr>
       </thead>
       <tbody>
@@ -54,15 +54,29 @@
             {%- elif season.size_bytes > 0 %}{{ (season.size_bytes / 1048576) | round(1) }} MB
             {%- else %}—{%- endif %}
           </td>
-          <td class="col-actions">
-            <button class="btn btn-ghost-danger btn-sm" type="button"
-              hx-post="/series/confirm"
-              hx-vals='{"action":"season","sonarr_id":{{ series_id }},"season_number":{{ season.number }}}'
-              hx-target="#delete-area"
-              hx-swap="innerHTML">
-              <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-              Delete
-            </button>
+          <td class="col-watched">
+            {% if season.watch_status %}
+              {% set ws = season.watch_status %}
+              {% if ws.watched_by_all %}
+                <span class="small">Watched by all</span>
+              {% else %}
+                {% set ns = namespace(lines=[]) %}
+                {% for user in users %}
+                  {% if ws.per_user.get(user.id, false) %}
+                    {% set ns.lines = ns.lines + [user.name] %}
+                  {% elif ws.partial_per_user.get(user.id, false) %}
+                    {% set ns.lines = ns.lines + [user.name + ' (partial)'] %}
+                  {% endif %}
+                {% endfor %}
+                {% if ns.lines %}
+                  <span class="small">{{ ns.lines | join(', ') }}</span>
+                {% else %}
+                  <span class="muted small">Unwatched</span>
+                {% endif %}
+              {% endif %}
+            {% else %}
+              <span class="muted small">—</span>
+            {% endif %}
           </td>
         </tr>
         <tr class="row-nested">
@@ -79,13 +93,14 @@
         hx-target="#delete-area"
         hx-swap="innerHTML">
         <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-        Delete selected
+        <span class="s-del-label-{{ series_id }}">Delete selected</span>
       </button>
     </div>
   </form>
   <script>
   (function () {
     var SID    = {{ series_id }};
+    var JF_SID = '{{ jf_series_id }}';
     var form   = document.getElementById('seasons-form-' + SID);
     var allCb  = document.getElementById('cb-all-s' + SID);
     var delBtn = document.getElementById('s-del-btn-' + SID);
@@ -99,7 +114,9 @@
         btn.classList.remove('open');
       } else {
         btn.classList.add('open');
-        htmx.ajax('GET', '/series/' + SID + '/seasons/' + sn + '/episodes', {
+        var url = '/series/' + SID + '/seasons/' + sn + '/episodes';
+        if (JF_SID) url += '?jf_series_id=' + JF_SID;
+        htmx.ajax('GET', url, {
           target: '#expand-s' + SID + '-' + sn, swap: 'innerHTML'
         });
       }
@@ -215,6 +232,16 @@
       params['action']    = action;
       if (fullSeasons.length) params['season_numbers']   = fullSeasons;
       if (epFileIds.length)   params['episode_file_ids'] = epFileIds;
+    });
+
+    var _delBtnLabel = delBtn.querySelector('.s-del-label-' + SID);
+    delBtn.addEventListener('htmx:beforeRequest', function () {
+      delBtn.disabled = true;
+      _delBtnLabel.textContent = 'Loading…';
+    });
+    delBtn.addEventListener('htmx:afterRequest', function () {
+      _delBtnLabel.textContent = 'Delete selected';
+      updateUI();
     });
 
     updateUI();

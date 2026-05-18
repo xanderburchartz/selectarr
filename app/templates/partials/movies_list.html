@@ -55,18 +55,21 @@
           </td>
           <td class="col-watched">
             {% if movie.watch_status %}
-              {% if movie.watch_status.watched_by_none %}
-                <span class="muted small">Unwatched</span>
-              {% elif movie.watch_status.watched_by_all %}
+              {% set ws = movie.watch_status %}
+              {% if ws.watched_by_all %}
                 <span class="small">Watched by all</span>
               {% else %}
-                {% set ns = namespace(names=[]) %}
+                {% set ns = namespace(lines=[]) %}
                 {% for user in users %}
-                  {% if movie.watch_status.per_user.get(user.id, false) %}
-                    {% set ns.names = ns.names + [user.name] %}
+                  {% if ws.per_user.get(user.id, false) %}
+                    {% set ns.lines = ns.lines + [user.name] %}
                   {% endif %}
                 {% endfor %}
-                <span class="small">Watched by: {{ ns.names | join(', ') }}</span>
+                {% if ns.lines %}
+                  <span class="small">{{ ns.lines | join(', ') }}</span>
+                {% else %}
+                  <span class="muted small">Unwatched</span>
+                {% endif %}
               {% endif %}
             {% else %}
               <span class="muted small">—</span>
