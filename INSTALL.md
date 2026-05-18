@@ -238,9 +238,9 @@ Set `arr-net` to the network name your \*arr stack uses, then you can use contai
 
 ## What you'll see
 
-![Selectarr Movies page — dark theme, showing the nav bar, watch-status filter, and a list of movies with file sizes and per-user watched indicators](docs/screenshot.png)
+![Selectarr Overview page — dark theme, showing the left sidebar navigation and the library statistics dashboard with Movies, Series, and Music panels](docs/screenshot.png)
 
-The nav bar has four sections:
+The left sidebar has five items:
 
 - **Home** — library overview with total counts and sizes per service
 - **Movies** — browse downloaded movies; filter by watch status; select and delete
