@@ -2,6 +2,23 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.0] — 2026-05-18
+
+### Added
+
+- **Auto-discovery** — on first run, Selectarr reads `/arr/{radarr,sonarr,lidarr}/config.xml` and pre-populates the Settings form with the discovered URL and API key. Each service card shows an *Auto-discovered*, *Config file not found*, or *Could not parse config* badge. Jellyfin must still be entered manually.
+- **HTML status page** — `/status` now returns a styled dark-theme page when opened in a browser, showing configuration state and per-service connectivity. API clients receive the existing JSON response unchanged. `?format=json` forces JSON regardless of `Accept` header.
+- **GitHub Actions workflow** — multi-arch Docker image (`linux/amd64`, `linux/arm64`) is built and published to `ghcr.io/xanderburchartz/selectarr` on every push to `main` and on version tags.
+- **`docker-compose.yml` volume mounts** — three commented-out mount lines for `/arr/{radarr,sonarr,lidarr}` to support auto-discovery.
+- **Community files** — `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, and GitHub issue templates for bug reports and feature requests.
+- **`INSTALL.md`** — full installation guide covering Docker (pull from `ghcr.io`) and local Python, Settings-page configuration, auto-discovery, config field reference, Docker networking, and troubleshooting.
+
+### Changed
+
+- `docker-compose.yml` now pulls the pre-built image from `ghcr.io/xanderburchartz/selectarr:latest` instead of building locally.
+
+---
+
 ## [0.1.0] — 2026-05-17
 
 Initial release.
