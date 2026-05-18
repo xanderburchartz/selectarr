@@ -2,6 +2,14 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.1] — 2026-05-18
+
+### Fixed
+
+- **500 error on settings page** — upgraded FastAPI from 0.104.1 to 0.115.12, pulling in Starlette 0.40+ which supports the `request`-as-first-argument `TemplateResponse` API used throughout the app. The pinned 0.104.1 shipped Starlette 0.27 which still required `"request"` in the context dict, causing a `ValueError` on every page render in the Docker image.
+
+---
+
 ## [0.2.0] — 2026-05-18
 
 ### Added
