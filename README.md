@@ -158,6 +158,6 @@ If 8889 conflicts with something else on your system, change the port mapping in
 ## Notes
 
 - Jellyfin watch status is cached in memory for 5 minutes to reduce API load on large libraries.
-- For series, "watched" means Jellyfin has marked the series as fully played or ≥95% complete.
+- Series, season, and episode watch status is computed by aggregating episode-level `Played` flags from Jellyfin. Series and seasons show a per-user "partial" state when some but not all episodes have been watched. Jellyfin's own series/season `PlayedPercentage` field is not used as it may not update promptly.
 - Music play-status correlation requires a MusicBrainz artist ID to be present in both Jellyfin and Lidarr.
 - Deleting at season or episode level removes only the files, not the series/season metadata from Sonarr.
