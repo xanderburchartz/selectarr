@@ -451,6 +451,28 @@ async def series_confirm(
     else:
         items = [series_title]
 
+    freed_bytes = 0
+    if action == "series" and series:
+        freed_bytes = series.get("statistics", {}).get("sizeOnDisk", 0)
+    elif action in ("season", "episode", "mixed"):
+        try:
+            ep_files = await sonarr.get_episode_files(sonarr_id)
+            file_size = {f["id"]: f.get("size", 0) for f in ep_files}
+            season_files: dict[int, list] = {}
+            for f in ep_files:
+                season_files.setdefault(f.get("seasonNumber", 0), []).append(f)
+            if action == "season":
+                for sn in effective_seasons:
+                    freed_bytes += sum(f.get("size", 0) for f in season_files.get(sn, []))
+            elif action == "episode":
+                freed_bytes = sum(file_size.get(fid, 0) for fid in episode_file_ids)
+            elif action == "mixed":
+                for sn in effective_seasons:
+                    freed_bytes += sum(f.get("size", 0) for f in season_files.get(sn, []))
+                freed_bytes += sum(file_size.get(fid, 0) for fid in episode_file_ids)
+        except Exception:
+            pass
+
     return templates.TemplateResponse(
         request,
         "partials/confirm_series.html",
@@ -460,6 +482,7 @@ async def series_confirm(
             "sonarr_id": sonarr_id,
             "season_numbers": effective_seasons,
             "episode_file_ids": episode_file_ids,
+            "freed_bytes": freed_bytes,
             "dry_run": config.dry_run,
         },
     )

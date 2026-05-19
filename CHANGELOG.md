@@ -2,6 +2,20 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.3] — 2026-05-19
+
+### Fixed
+
+- **Series delete confirmation — disk space** — "Will free" now shows the
+  actual size of the selected content: full-series size comes from Sonarr's
+  `statistics.sizeOnDisk`, season and episode sizes are computed by summing
+  the matching episode file sizes. Previously always showed "—".
+- **Series delete confirmation — button feedback** — the "Delete now" /
+  "Run simulation" button now disables itself and shows "Deleting…" /
+  "Running…" while the request is in flight, preventing double-submits.
+
+---
+
 ## [0.2.2] — 2026-05-18
 
 ### Added
