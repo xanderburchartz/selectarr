@@ -5,6 +5,9 @@ config/config.yaml
 # Database
 config/*.db
 *.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # Python
 __pycache__/
@@ -24,3 +27,6 @@ build/
 .idea/
 .vscode/
 *.swp
+
+# Claude Code local files (settings, worktrees)
+.claude/
