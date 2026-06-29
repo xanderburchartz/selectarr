@@ -9,11 +9,11 @@
   <table class="data-table">
     <thead>
       <tr>
-        <th class="col-ts">Timestamp</th>
-        <th class="col-type">Type</th>
-        <th>Title</th>
-        <th class="col-mode">Mode</th>
-        <th class="col-result">Result</th>
+        <th class="col-ts">{{ t('col.timestamp') }}</th>
+        <th class="col-type">{{ t('col.type') }}</th>
+        <th>{{ t('col.title') }}</th>
+        <th class="col-mode">{{ t('col.mode') }}</th>
+        <th class="col-result">{{ t('col.result') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -52,6 +52,6 @@
     </tbody>
   </table>
   {% if not entries %}
-  <div class="empty-state">No log entries match the current filter.</div>
+  <div class="empty-state">{{ t('logs.empty') }}</div>
   {% endif %}
 </div>

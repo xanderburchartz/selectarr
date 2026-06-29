@@ -133,6 +133,17 @@ async def settings_save(  # noqa: PLR0913
     return RedirectResponse("/settings?saved=1", status_code=303)
 
 
+@router.post("/language")
+async def set_language(language: Annotated[str, Form()]):
+    """Set the UI language cookie and redirect back to /settings."""
+    from fastapi.responses import RedirectResponse
+    resp = RedirectResponse("/settings", status_code=303)
+    from app.i18n import SUPPORTED_LANGUAGES
+    if language in SUPPORTED_LANGUAGES:
+        resp.set_cookie("selectarr_lang", language, max_age=60*60*24*365, httponly=False, samesite="lax")
+    return resp
+
+
 @router.post("/test/{service}", response_class=HTMLResponse)
 async def test_connection(service: str, request: Request):
     """HTMX endpoint: test connectivity to a service and return a status badge.

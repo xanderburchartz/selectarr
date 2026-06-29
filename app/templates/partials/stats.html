@@ -6,7 +6,7 @@
 
   <div class="stat-total-banner">
     <div class="stat-total-value">{{ stats.total_gb }} GB</div>
-    <div class="stat-total-label">Total library size</div>
+    <div class="stat-total-label">{{ t('home.total_size') }}</div>
   </div>
 
   <div class="stats-grid">
@@ -17,7 +17,7 @@
       <div class="card-header">
         <div class="service-head">
           <span class="service-dot radarr"></span>
-          <h2>Movies</h2>
+          <h2>{{ t('nav.movies') }}</h2>
           <span class="kind-tag">Radarr</span>
         </div>
       </div>
@@ -51,7 +51,7 @@
       <div class="card-header">
         <div class="service-head">
           <span class="service-dot sonarr"></span>
-          <h2>Series</h2>
+          <h2>{{ t('nav.series') }}</h2>
           <span class="kind-tag">Sonarr</span>
         </div>
       </div>
@@ -62,7 +62,7 @@
           <p class="muted small">Service unavailable.</p>
         {% else %}
           <div class="stat-line"><span class="stat-line-label">Series</span><strong class="mono">{{ s.count }}</strong></div>
-          <div class="stat-line"><span class="stat-line-label">Seasons</span><strong class="mono">{{ s.season_count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">{{ t('col.seasons') }}</span><strong class="mono">{{ s.season_count }}</strong></div>
           <div class="stat-line"><span class="stat-line-label">Episodes downloaded</span><strong class="mono">{{ s.episode_count }}</strong></div>
           <div class="stat-line"><span class="stat-line-label">Total size</span><strong class="mono">{{ s.size_gb }} GB</strong></div>
           <div class="stat-line">
@@ -87,7 +87,7 @@
       <div class="card-header">
         <div class="service-head">
           <span class="service-dot lidarr"></span>
-          <h2>Music</h2>
+          <h2>{{ t('nav.music') }}</h2>
           <span class="kind-tag">Lidarr</span>
         </div>
       </div>
@@ -98,7 +98,7 @@
           <p class="muted small">Service unavailable.</p>
         {% else %}
           <div class="stat-line"><span class="stat-line-label">Artists</span><strong class="mono">{{ mu.artist_count }}</strong></div>
-          <div class="stat-line"><span class="stat-line-label">Albums</span><strong class="mono">{{ mu.album_count }}</strong></div>
+          <div class="stat-line"><span class="stat-line-label">{{ t('col.albums') }}</span><strong class="mono">{{ mu.album_count }}</strong></div>
           <div class="stat-line"><span class="stat-line-label">Track files</span><strong class="mono">{{ mu.track_count }}</strong></div>
           <div class="stat-line"><span class="stat-line-label">Total size</span><strong class="mono">{{ mu.size_gb }} GB</strong></div>
           <div class="stat-line">

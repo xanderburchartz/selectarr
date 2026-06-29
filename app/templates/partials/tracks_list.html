@@ -9,13 +9,13 @@
     <thead>
       <tr>
         <th class="col-cb"></th>
-        <th>Title</th>
+        <th>{{ t('col.title') }}</th>
         <th class="col-size">
           <button class="sort-btn{% if sort_by == 'size' %} sort-active{% endif %}"
             hx-get="/music/albums/{{ album_id }}/tracks?sort_by=size&sort_dir={{ 'asc' if sort_dir == 'desc' else 'desc' }}"
             hx-target="#expand-al{{ album_id }}"
             hx-swap="innerHTML"
-            aria-label="Sort tracks by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
+            aria-label="Sort tracks by size">{{ t('col.size') }}{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
         </th>
       </tr>
     </thead>

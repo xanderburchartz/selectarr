@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Movies — Selectarr{% endblock %}
+{% block title %}{{ t('movies.title') }} — Selectarr{% endblock %}
 {% block content %}
 
 <header class="page-header">
@@ -7,8 +7,8 @@
     <div class="page-eyebrow">
       <span class="service-tag"><span class="service-dot radarr"></span> Radarr</span>
     </div>
-    <h1 class="page-title">Movies</h1>
-    <p class="page-subtitle">Browse and selectively delete movies. Files are removed via Radarr and added to the import exclusion list.</p>
+    <h1 class="page-title">{{ t('movies.title') }}</h1>
+    <p class="page-subtitle">{{ t('movies.subtitle') }}</p>
   </div>
 </header>
 
@@ -16,7 +16,7 @@
 <div class="banner banner-error">
   <span class="banner-icon" aria-hidden="true">!</span>
   <div class="banner-body">
-    <strong>Service unavailable</strong>
+    <strong>{{ t('banner.service_unavailable') }}</strong>
     <span>{{ service_error }} <a href="/settings">Check Settings →</a></span>
   </div>
 </div>
@@ -25,7 +25,7 @@
 <div class="banner banner-warning">
   <span class="banner-icon" aria-hidden="true">!</span>
   <div class="banner-body">
-    <strong>Watch status unavailable</strong>
+    <strong>{{ t('banner.watch_unavailable') }}</strong>
     <span>{{ jellyfin_warning }}</span>
   </div>
 </div>
@@ -33,15 +33,15 @@
 
 <div class="filter-bar">
   <label class="field">
-    <span class="field-label">Filter</span>
+    <span class="field-label">{{ t('common.filter') }}</span>
     <span class="select-wrap">
       <select id="filter-select" name="filter"
         hx-get="/movies/list"
         hx-target="#movies-container"
-        hx-include="#user-select"
+        hx-include="#user-select{% if available_languages %},#lang-select{% endif %}"
         hx-indicator="#loading">
         {% for value, label in filter_options %}
-          <option value="{{ value }}" {% if filter == value %}selected{% endif %}>{{ label }}</option>
+          <option value="{{ value }}" {% if filter == value %}selected{% endif %}>{{ t(label) }}</option>
         {% endfor %}
       </select>
       <span class="select-caret">▾</span>
@@ -49,14 +49,14 @@
   </label>
 
   <label class="field">
-    <span class="field-label">User</span>
+    <span class="field-label">{{ t('common.user') }}</span>
     <span class="select-wrap">
       <select id="user-select" name="user_id"
         hx-get="/movies/list"
         hx-target="#movies-container"
-        hx-include="#filter-select"
+        hx-include="#filter-select{% if available_languages %},#lang-select{% endif %}"
         hx-indicator="#loading">
-        <option value="">— all users —</option>
+        <option value="">{{ t('common.all_users') }}</option>
         {% for user in users %}
           <option value="{{ user.id }}" {% if filter_user_id == user.id %}selected{% endif %}>{{ user.name }}</option>
         {% endfor %}
@@ -65,8 +65,54 @@
     </span>
   </label>
 
+  {% if available_languages %}
+  <div class="field">
+    <span class="field-label">{{ t('common.language') }}</span>
+    <details class="lang-select" id="lang-select">
+      <summary>
+        <span class="lang-label">{{ t('common.any_language') }}</span>
+        <span class="select-caret">▾</span>
+      </summary>
+      <div class="lang-select-panel">
+        {% for lang in available_languages %}
+        <label class="lang-option cb">
+          <input type="checkbox" name="languages" value="{{ lang }}"
+            {% if lang in selected_languages %}checked{% endif %}
+            hx-get="/movies/list"
+            hx-target="#movies-container"
+            hx-include="#filter-select,#user-select,#lang-select"
+            hx-indicator="#loading" />
+          <span class="cb-box" aria-hidden="true">
+            <svg viewBox="0 0 12 12" class="cb-check"><path d="M2.5 6.2 L4.8 8.5 L9.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 12 12" class="cb-dash"><path d="M3 6 H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </span>
+          <span class="cb-label">{{ lang }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </details>
+  </div>
+  <script>
+  (function() {
+    var d = document.getElementById('lang-select');
+    if (!d) return;
+    var lbl = d.querySelector('.lang-label');
+    var anyLang = '{{ t("common.any_language") }}';
+    function upd() {
+      var checked = Array.from(d.querySelectorAll('input:checked'));
+      lbl.textContent = checked.length === 0 ? anyLang
+        : checked.length === 1 ? checked[0].value
+        : checked.length + ' languages';
+    }
+    d.addEventListener('change', upd);
+    document.addEventListener('click', function(e) { if (!d.contains(e.target)) d.removeAttribute('open'); });
+    upd();
+  })();
+  </script>
+  {% endif %}
+
   <div class="filter-bar-spacer">
-    <span id="loading" class="htmx-indicator muted small">Loading…</span>
+    <span id="loading" class="htmx-indicator muted small">{{ t('common.loading') }}</span>
   </div>
 </div>
 

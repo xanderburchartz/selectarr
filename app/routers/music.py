@@ -46,11 +46,11 @@ async def _refresh_after_music_delete(
         await log_action("music", "Jellyfin library", "refresh", dry_run=False, success=False, details=f"Jellyfin: {exc}")
 
 FILTER_OPTIONS = [
-    ("all", "Show all"),
-    ("watched_all", "Played by all users"),
-    ("watched_any", "Played by at least one user"),
-    ("unwatched", "Not played by anyone"),
-    ("watched_by_user", "Played by specific user"),
+    ("all", "filter.all"),
+    ("watched_all", "filter.listened_all"),
+    ("watched_any", "filter.listened_any"),
+    ("unwatched", "filter.not_listened"),
+    ("watched_by_user", "filter.listened_by_user"),
 ]
 
 

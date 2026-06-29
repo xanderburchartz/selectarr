@@ -12,9 +12,9 @@
   <div class="login-card">
     <div class="login-brand">
       <img src="/static/img/logo.svg" alt="" class="login-logo">
-      <span class="login-title">Selectarr</span>
+      <span class="login-title">{{ t('login.title') }}</span>
     </div>
-    <p class="login-subtitle">Sign in with your Jellyfin account</p>
+    <p class="login-subtitle">{{ t('login.subtitle') }}</p>
 
     {% if error %}
     <div class="banner banner-error">
@@ -25,16 +25,16 @@
 
     <form method="post" action="/login" class="login-form">
       <div class="field">
-        <label class="field-label" for="username">Username</label>
+        <label class="field-label" for="username">{{ t('login.username') }}</label>
         <input class="input" id="username" name="username" type="text"
           autocomplete="username" required autofocus />
       </div>
       <div class="field">
-        <label class="field-label" for="password">Password</label>
+        <label class="field-label" for="password">{{ t('login.password') }}</label>
         <input class="input" id="password" name="password" type="password"
           autocomplete="current-password" required />
       </div>
-      <button type="submit" class="btn btn-primary login-submit">Sign in</button>
+      <button type="submit" class="btn btn-primary login-submit">{{ t('login.submit') }}</button>
     </form>
   </div>
 </div>

@@ -14,16 +14,16 @@
             </label>
           </th>
           <th class="col-expand"></th>
-          <th>Season</th>
-          <th class="col-num">Episodes</th>
+          <th>{{ t('col.season') }}</th>
+          <th class="col-num">{{ t('col.episodes') }}</th>
           <th class="col-size">
             <button class="sort-btn{% if sort_by == 'size' %} sort-active{% endif %}"
               hx-get="/series/{{ series_id }}/seasons?sort_by=size&sort_dir={{ 'asc' if sort_dir == 'desc' else 'desc' }}"
               hx-target="#expand-{{ series_id }}"
               hx-swap="innerHTML"
-              aria-label="Sort seasons by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
+              aria-label="Sort seasons by size">{{ t('col.size') }}{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
           </th>
-          <th class="col-watched">Watched</th>
+          <th class="col-watched">{{ t('col.watched') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -45,7 +45,7 @@
               <svg class="chevron-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg>
             </button>
           </td>
-          <td><span class="title-cell">Season {{ season.number }}</span></td>
+          <td><span class="title-cell">{{ t('series.season') }} {{ season.number }}</span></td>
           <td class="col-num mono">
             {{ season.episode_file_count }}<span class="muted">/{{ season.episode_count }}</span>
           </td>
@@ -58,24 +58,24 @@
             {% if season.watch_status %}
               {% set ws = season.watch_status %}
               {% if ws.watched_by_all %}
-                <span class="small">Watched by all</span>
+                <span class="small">{{ t('watch.watched_by_all') }}</span>
               {% else %}
                 {% set ns = namespace(lines=[]) %}
                 {% for user in users %}
                   {% if ws.per_user.get(user.id, false) %}
                     {% set ns.lines = ns.lines + [user.name] %}
                   {% elif ws.partial_per_user.get(user.id, false) %}
-                    {% set ns.lines = ns.lines + [user.name + ' (partial)'] %}
+                    {% set ns.lines = ns.lines + [user.name + ' ' + t('watch.partial')] %}
                   {% endif %}
                 {% endfor %}
                 {% if ns.lines %}
                   <span class="small">{{ ns.lines | join(', ') }}</span>
                 {% else %}
-                  <span class="muted small">Unwatched</span>
+                  <span class="muted small">{{ t('watch.unwatched') }}</span>
                 {% endif %}
               {% endif %}
             {% else %}
-              <span class="muted small">—</span>
+              <span class="muted small">{{ t('watch.no_data') }}</span>
             {% endif %}
           </td>
         </tr>
@@ -93,7 +93,7 @@
         hx-target="#delete-area"
         hx-swap="innerHTML">
         <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-        <span class="s-del-label-{{ series_id }}">Delete selected</span>
+        <span class="s-del-label-{{ series_id }}">{{ t('common.delete_selected') }}</span>
       </button>
     </div>
   </form>
@@ -104,6 +104,8 @@
     var form   = document.getElementById('seasons-form-' + SID);
     var allCb  = document.getElementById('cb-all-s' + SID);
     var delBtn = document.getElementById('s-del-btn-' + SID);
+    var loadingText = '{{ t("common.loading") }}';
+    var deleteText  = '{{ t("common.delete_selected") }}';
     // season_number → [episode_file_id, …] for indeterminate seasons; persists across collapse
     var epMap  = {};
 
@@ -237,10 +239,10 @@
     var _delBtnLabel = delBtn.querySelector('.s-del-label-' + SID);
     delBtn.addEventListener('htmx:beforeRequest', function () {
       delBtn.disabled = true;
-      _delBtnLabel.textContent = 'Loading…';
+      _delBtnLabel.textContent = loadingText;
     });
     delBtn.addEventListener('htmx:afterRequest', function () {
-      _delBtnLabel.textContent = 'Delete selected';
+      _delBtnLabel.textContent = deleteText;
       updateUI();
     });
 

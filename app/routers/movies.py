@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Annotated, Optional
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Form, Query, Request
 from fastapi.responses import HTMLResponse
 
 from app.config import get_config
@@ -38,11 +38,11 @@ async def _refresh_after_movies_delete(
         await log_action("movie", "Jellyfin library", "refresh", dry_run=False, success=False, details=f"Jellyfin: {exc}")
 
 FILTER_OPTIONS = [
-    ("all", "Show all"),
-    ("watched_all", "Watched by all users"),
-    ("watched_any", "Watched by at least one user"),
-    ("unwatched", "Not watched by anyone"),
-    ("watched_by_user", "Watched by specific user"),
+    ("all", "filter.all"),
+    ("watched_all", "filter.watched_all"),
+    ("watched_any", "filter.watched_any"),
+    ("unwatched", "filter.unwatched"),
+    ("watched_by_user", "filter.watched_by_user"),
 ]
 
 
@@ -58,10 +58,11 @@ async def _build_movie_items(
     filter_type: str,
     filter_user_id: Optional[str],
     config=None,
-) -> tuple[list[MovieItem], list, list, Optional[str]]:
+    languages: list[str] = [],
+) -> tuple[list[MovieItem], list, list, Optional[str], list[str]]:
     """Fetch and filter movies.
 
-    Returns (movies, users, filter_options, jellyfin_warning).
+    Returns (movies, users, filter_options, jellyfin_warning, available_languages).
     Jellyfin failures degrade gracefully — watch status becomes unavailable.
     Radarr failures raise ServiceError.
     """
@@ -107,6 +108,7 @@ async def _build_movie_items(
                 continue
 
         size = rm.get("sizeOnDisk", 0) or 0
+        language = rm.get("originalLanguage", {}).get("name") or None
         movies.append(
             MovieItem(
                 radarr_id=rm["id"],
@@ -117,11 +119,15 @@ async def _build_movie_items(
                 has_file=rm.get("hasFile", False),
                 file_size_bytes=size if size > 0 else None,
                 watch_status=build_ws(per_user) if tmdb_id else None,
+                language=language,
             )
         )
 
     movies.sort(key=lambda m: m.title.lower())
-    return movies, users, FILTER_OPTIONS, jellyfin_warning
+    available_languages = sorted({m.language for m in movies if m.language})
+    if languages:
+        movies = [m for m in movies if m.language in languages]
+    return movies, users, FILTER_OPTIONS, jellyfin_warning, available_languages
 
 
 def _apply_user_defaults(request: Request, filter: Optional[str], user_id: Optional[str]):
@@ -133,6 +139,7 @@ async def movies_page(
     request: Request,
     filter: Optional[str] = None,
     user_id: Optional[str] = None,
+    languages: Annotated[list[str], Query()] = [],
 ):
     """Full movies page."""
     filter, user_id = _apply_user_defaults(request, filter, user_id)
@@ -143,8 +150,8 @@ async def movies_page(
         )
 
     try:
-        movies, users, filter_options, jellyfin_warning = await _build_movie_items(
-            filter, user_id, config
+        movies, users, filter_options, jellyfin_warning, available_languages = await _build_movie_items(
+            filter, user_id, config, languages
         )
     except ServiceError as exc:
         return templates.TemplateResponse(
@@ -158,6 +165,8 @@ async def movies_page(
                 "filter_options": FILTER_OPTIONS,
                 "service_error": str(exc),
                 "dry_run": config.dry_run,
+                "available_languages": [],
+                "selected_languages": [],
             },
         )
 
@@ -172,6 +181,8 @@ async def movies_page(
             "filter_options": filter_options,
             "jellyfin_warning": jellyfin_warning,
             "dry_run": config.dry_run,
+            "available_languages": available_languages,
+            "selected_languages": languages,
         },
     )
 
@@ -183,6 +194,7 @@ async def movies_list(
     user_id: Optional[str] = None,
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
+    languages: Annotated[list[str], Query()] = [],
 ):
     """HTMX partial: filtered movie list."""
     filter, user_id = _apply_user_defaults(request, filter, user_id)
@@ -191,7 +203,7 @@ async def movies_list(
         return HTMLResponse("<p>Radarr is not configured.</p>")
 
     try:
-        movies, users, _, jellyfin_warning = await _build_movie_items(filter, user_id, config)
+        movies, users, _, jellyfin_warning, available_languages = await _build_movie_items(filter, user_id, config, languages)
     except ServiceError as exc:
         return HTMLResponse(error_html(str(exc)))
 
@@ -307,7 +319,8 @@ async def movies_delete(
 async def api_list_movies(
     filter: str = "all",
     user_id: Optional[str] = None,
+    languages: Annotated[list[str], Query()] = [],
 ) -> list[MovieItem]:
     """Return movies from Radarr enriched with Jellyfin watch status."""
-    movies, _, _, _ = await _build_movie_items(filter, user_id)
+    movies, _, _, _, _ = await _build_movie_items(filter, user_id, languages=languages)
     return movies

@@ -59,29 +59,29 @@
     </div>
 
     <nav class="sidebar-nav" aria-label="Main navigation">
-      <a href="/" class="sidebar-item {% if request.url.path == '/' %}active{% endif %}" title="Overview">
+      <a href="/" class="sidebar-item {% if request.url.path == '/' %}active{% endif %}" title="{{ t('nav.overview') }}">
         <svg class="sidebar-icon" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 7L8 2.5 13.5 7V14H10V10H6V14H2.5V7Z"/></svg>
-        <span class="sidebar-label">Overview</span>
+        <span class="sidebar-label">{{ t('nav.overview') }}</span>
       </a>
-      <a href="/movies" class="sidebar-item {% if request.url.path.startswith('/movies') %}active{% endif %}" title="Movies">
+      <a href="/movies" class="sidebar-item {% if request.url.path.startswith('/movies') %}active{% endif %}" title="{{ t('nav.movies') }}">
         <svg class="sidebar-icon" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M5 2.5v11M11 2.5v11M2 6h12M2 10h12"/></svg>
-        <span class="sidebar-label">Movies</span>
+        <span class="sidebar-label">{{ t('nav.movies') }}</span>
       </a>
-      <a href="/series" class="sidebar-item {% if request.url.path.startswith('/series') %}active{% endif %}" title="Series">
+      <a href="/series" class="sidebar-item {% if request.url.path.startswith('/series') %}active{% endif %}" title="{{ t('nav.series') }}">
         <svg class="sidebar-icon" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M5.5 1.5 8 3.5 10.5 1.5"/></svg>
-        <span class="sidebar-label">Series</span>
+        <span class="sidebar-label">{{ t('nav.series') }}</span>
       </a>
-      <a href="/music" class="sidebar-item {% if request.url.path.startswith('/music') %}active{% endif %}" title="Music">
+      <a href="/music" class="sidebar-item {% if request.url.path.startswith('/music') %}active{% endif %}" title="{{ t('nav.music') }}">
         <svg class="sidebar-icon" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M6 12V4l7-1.5V11"/><circle cx="4.5" cy="12" r="1.6"/><circle cx="11.5" cy="11" r="1.6"/></svg>
-        <span class="sidebar-label">Music</span>
+        <span class="sidebar-label">{{ t('nav.music') }}</span>
       </a>
-      <a href="/logs" class="sidebar-item {% if request.url.path.startswith('/logs') %}active{% endif %}" title="Logs">
+      <a href="/logs" class="sidebar-item {% if request.url.path.startswith('/logs') %}active{% endif %}" title="{{ t('nav.logs') }}">
         <svg class="sidebar-icon" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 3h7l3 3v7H3z"/><path d="M10 3v3h3M5.5 8.5h5M5.5 11h4"/></svg>
-        <span class="sidebar-label">Logs</span>
+        <span class="sidebar-label">{{ t('nav.logs') }}</span>
       </a>
-      <a href="/settings" class="sidebar-item {% if request.url.path.startswith('/settings') %}active{% endif %}" title="Settings">
+      <a href="/settings" class="sidebar-item {% if request.url.path.startswith('/settings') %}active{% endif %}" title="{{ t('nav.settings') }}">
         <svg class="sidebar-icon" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>
-        <span class="sidebar-label">Settings</span>
+        <span class="sidebar-label">{{ t('nav.settings') }}</span>
       </a>
     </nav>
 
@@ -90,7 +90,7 @@
       <div class="sidebar-footer-row" title="Dry-run mode">
         <span class="pill pill-warning sidebar-pill">
           <span class="pill-dot"></span>
-          <span class="sidebar-label">DRY-RUN</span>
+          <span class="sidebar-label">{{ t('nav.dry_run') }}</span>
         </span>
       </div>
       {% endif %}
@@ -108,9 +108,9 @@
           <span class="sidebar-label sidebar-username">{{ request.state.user.username }}</span>
         </div>
         <form action="/logout" method="post" style="margin:0;">
-          <button type="submit" class="sidebar-logout-btn" title="Sign out">
+          <button type="submit" class="sidebar-logout-btn" title="{{ t('nav.sign_out') }}">
             <svg class="sidebar-icon" viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3M10.5 11l3-3-3-3M13.5 8H6"/></svg>
-            <span class="sidebar-label">Sign out</span>
+            <span class="sidebar-label">{{ t('nav.sign_out') }}</span>
           </button>
         </form>
       </div>
@@ -127,27 +127,27 @@
   <nav class="mobile-nav" aria-label="Mobile navigation">
     <a href="/" class="mobile-nav-item {% if request.url.path == '/' %}active{% endif %}">
       <svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2.5 7L8 2.5 13.5 7V14H10V10H6V14H2.5V7Z"/></svg>
-      <span>Overview</span>
+      <span>{{ t('nav.overview') }}</span>
     </a>
     <a href="/movies" class="mobile-nav-item {% if request.url.path.startswith('/movies') %}active{% endif %}">
       <svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M5 2.5v11M11 2.5v11M2 6h12M2 10h12"/></svg>
-      <span>Movies</span>
+      <span>{{ t('nav.movies') }}</span>
     </a>
     <a href="/series" class="mobile-nav-item {% if request.url.path.startswith('/series') %}active{% endif %}">
       <svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M5.5 1.5 8 3.5 10.5 1.5"/></svg>
-      <span>Series</span>
+      <span>{{ t('nav.series') }}</span>
     </a>
     <a href="/music" class="mobile-nav-item {% if request.url.path.startswith('/music') %}active{% endif %}">
       <svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M6 12V4l7-1.5V11"/><circle cx="4.5" cy="12" r="1.6"/><circle cx="11.5" cy="11" r="1.6"/></svg>
-      <span>Music</span>
+      <span>{{ t('nav.music') }}</span>
     </a>
     <a href="/logs" class="mobile-nav-item {% if request.url.path.startswith('/logs') %}active{% endif %}">
       <svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 3h7l3 3v7H3z"/><path d="M10 3v3h3M5.5 8.5h5M5.5 11h4"/></svg>
-      <span>Logs</span>
+      <span>{{ t('nav.logs') }}</span>
     </a>
     <a href="/settings" class="mobile-nav-item {% if request.url.path.startswith('/settings') %}active{% endif %}">
       <svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>
-      <span>Settings</span>
+      <span>{{ t('nav.settings') }}</span>
     </a>
   </nav>
 

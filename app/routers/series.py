@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Annotated, Optional
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Form, Request
+from fastapi import APIRouter, BackgroundTasks, Form, Query, Request
 from fastapi.responses import HTMLResponse
 
 from app.config import get_config
@@ -40,11 +40,11 @@ async def _refresh_after_series_delete(config, sonarr_id: int, title: str) -> No
         await log_action("series", "Jellyfin library", "refresh", dry_run=False, success=False, details=f"Jellyfin: {exc}")
 
 FILTER_OPTIONS = [
-    ("all", "Show all"),
-    ("watched_all", "Watched by all users"),
-    ("watched_any", "Watched by at least one user"),
-    ("unwatched", "Not watched by anyone"),
-    ("watched_by_user", "Watched by specific user"),
+    ("all", "filter.all"),
+    ("watched_all", "filter.watched_all"),
+    ("watched_any", "filter.watched_any"),
+    ("unwatched", "filter.unwatched"),
+    ("watched_by_user", "filter.watched_by_user"),
 ]
 
 
@@ -61,6 +61,7 @@ def _build_series_item(
     per_user: dict[str, bool],
     partial_per_user: dict[str, bool],
     build_ws,
+    language: Optional[str] = None,
 ) -> SeriesItem:
     """Convert a raw Sonarr series dict to a SeriesItem."""
     seasons = []
@@ -89,6 +90,7 @@ def _build_series_item(
         total_size_bytes=stats.get("sizeOnDisk", 0),
         watch_status=build_ws(per_user, partial_per_user) if per_user is not None else None,
         seasons=seasons,
+        language=language,
     )
 
 
@@ -96,10 +98,11 @@ async def _build_series_list(
     filter_type: str,
     filter_user_id: Optional[str],
     config=None,
-) -> tuple[list[SeriesItem], list, list, Optional[str]]:
+    languages: list[str] = [],
+) -> tuple[list[SeriesItem], list, list, Optional[str], list[str]]:
     """Fetch and filter series.
 
-    Returns (series, users, filter_options, jellyfin_warning).
+    Returns (series, users, filter_options, jellyfin_warning, available_languages).
     Jellyfin failures degrade gracefully. Sonarr failures raise ServiceError.
     """
     if config is None:
@@ -126,6 +129,11 @@ async def _build_series_list(
     except httpx.HTTPError as exc:
         raise ServiceError(classify_error("Sonarr", exc)) from exc
 
+    try:
+        lang_profiles = await sonarr.get_language_profiles() if sonarr else {}
+    except Exception:
+        lang_profiles = {}
+
     result = []
     for s in raw_series:
         tvdb_id = str(s.get("tvdbId", "")) or None
@@ -143,10 +151,14 @@ async def _build_series_list(
             if not per_user.get(filter_user_id, False):
                 continue
 
-        result.append(_build_series_item(s, per_user, partial_per_user, build_ws))
+        language = lang_profiles.get(s.get("languageProfileId"))
+        result.append(_build_series_item(s, per_user, partial_per_user, build_ws, language))
 
     result.sort(key=lambda s: s.title.lower())
-    return result, users, FILTER_OPTIONS, jellyfin_warning
+    available_languages = sorted({s.language for s in result if s.language})
+    if languages:
+        result = [s for s in result if s.language in languages]
+    return result, users, FILTER_OPTIONS, jellyfin_warning, available_languages
 
 
 def _apply_user_defaults(request: Request, filter: Optional[str], user_id: Optional[str]):
@@ -158,6 +170,7 @@ async def series_page(
     request: Request,
     filter: Optional[str] = None,
     user_id: Optional[str] = None,
+    languages: Annotated[list[str], Query()] = [],
 ):
     """Full series page."""
     filter, user_id = _apply_user_defaults(request, filter, user_id)
@@ -168,8 +181,8 @@ async def series_page(
         )
 
     try:
-        series, users, filter_options, jellyfin_warning = await _build_series_list(
-            filter, user_id, config
+        series, users, filter_options, jellyfin_warning, available_languages = await _build_series_list(
+            filter, user_id, config, languages
         )
     except ServiceError as exc:
         return templates.TemplateResponse(
@@ -183,6 +196,8 @@ async def series_page(
                 "filter_options": FILTER_OPTIONS,
                 "service_error": str(exc),
                 "dry_run": config.dry_run,
+                "available_languages": [],
+                "selected_languages": [],
             },
         )
 
@@ -197,6 +212,8 @@ async def series_page(
             "filter_options": filter_options,
             "jellyfin_warning": jellyfin_warning,
             "dry_run": config.dry_run,
+            "available_languages": available_languages,
+            "selected_languages": languages,
         },
     )
 
@@ -208,6 +225,7 @@ async def series_list(
     user_id: Optional[str] = None,
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
+    languages: Annotated[list[str], Query()] = [],
 ):
     """HTMX partial: filtered series list."""
     filter, user_id = _apply_user_defaults(request, filter, user_id)
@@ -216,7 +234,7 @@ async def series_list(
         return HTMLResponse("<p>Sonarr is not configured.</p>")
 
     try:
-        series, users, _, jellyfin_warning = await _build_series_list(filter, user_id, config)
+        series, users, _, jellyfin_warning, available_languages = await _build_series_list(filter, user_id, config, languages)
     except ServiceError as exc:
         return HTMLResponse(error_html(str(exc)))
 
@@ -617,7 +635,8 @@ async def series_delete(
 async def api_list_series(
     filter: str = "all",
     user_id: Optional[str] = None,
+    languages: Annotated[list[str], Query()] = [],
 ) -> list[SeriesItem]:
     """Return series from Sonarr enriched with Jellyfin watch status."""
-    series, _, _, _ = await _build_series_list(filter, user_id)
+    series, _, _, _, _ = await _build_series_list(filter, user_id, languages=languages)
     return series

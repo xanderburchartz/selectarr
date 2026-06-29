@@ -33,6 +33,7 @@ class MovieItem(BaseModel):
     has_file: bool
     file_size_bytes: Optional[int] = None
     watch_status: Optional[WatchStatus] = None
+    language: Optional[str] = None
 
 
 class EpisodeItem(BaseModel):
@@ -71,6 +72,7 @@ class SeriesItem(BaseModel):
     total_size_bytes: int
     watch_status: Optional[WatchStatus] = None
     seasons: list[SeasonItem] = []
+    language: Optional[str] = None
 
 
 class TrackItem(BaseModel):

@@ -13,18 +13,18 @@
               </span>
             </label>
           </th>
-          <th>Title</th>
-          <th class="col-year">Year</th>
+          <th>{{ t('col.title') }}</th>
+          <th class="col-year">{{ t('col.year') }}</th>
           <th class="col-size">
             <button class="sort-btn{% if sort_by == 'size' %} sort-active{% endif %}"
               hx-get="/movies/list"
               hx-target="#movies-container"
               hx-swap="innerHTML"
-              hx-include="#filter-select,#user-select"
+              hx-include="#filter-select,#user-select,#lang-select"
               hx-vals='{"sort_by":"size","sort_dir":"{{ "asc" if sort_dir == "desc" else "desc" }}"}'
-              aria-label="Sort by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
+              aria-label="Sort by size">{{ t('col.size') }}{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
           </th>
-          <th class="col-watched">Watched</th>
+          <th class="col-watched">{{ t('col.watched') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -57,7 +57,7 @@
             {% if movie.watch_status %}
               {% set ws = movie.watch_status %}
               {% if ws.watched_by_all %}
-                <span class="small">Watched by all</span>
+                <span class="small">{{ t('watch.watched_by_all') }}</span>
               {% else %}
                 {% set ns = namespace(lines=[]) %}
                 {% for user in users %}
@@ -68,11 +68,11 @@
                 {% if ns.lines %}
                   <span class="small">{{ ns.lines | join(', ') }}</span>
                 {% else %}
-                  <span class="muted small">Unwatched</span>
+                  <span class="muted small">{{ t('watch.unwatched') }}</span>
                 {% endif %}
               {% endif %}
             {% else %}
-              <span class="muted small">—</span>
+              <span class="muted small">{{ t('watch.no_data') }}</span>
             {% endif %}
           </td>
         </tr>
@@ -83,7 +83,7 @@
 
   <div class="action-row">
     <div class="action-info" id="movies-action-info">
-      <span class="muted">Select movies to delete.</span>
+      <span class="muted">{{ t('movies.select_prompt') }}</span>
     </div>
     <button type="button" id="movies-delete-btn" class="btn btn-danger" disabled
       hx-post="/movies/confirm"
@@ -91,7 +91,7 @@
       hx-target="#delete-area"
       hx-swap="innerHTML">
       <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-      {% if dry_run %}Preview deletion{% else %}Delete selected{% endif %}
+      {% if dry_run %}{{ t('common.preview_deletion') }}{% else %}{{ t('common.delete_selected') }}{% endif %}
     </button>
   </div>
 </form>
@@ -102,6 +102,7 @@
   var allCb   = document.getElementById('cb-all-movies');
   var infoEl  = document.getElementById('movies-action-info');
   var delBtn  = document.getElementById('movies-delete-btn');
+  var selectPrompt = '{{ t("movies.select_prompt") }}';
 
   function getMovieCbs() { return Array.from(form.querySelectorAll('.movie-cb')); }
 
@@ -110,7 +111,7 @@
     var checked = cbs.filter(function(c){ return c.checked; });
     delBtn.disabled = checked.length === 0;
     if (checked.length === 0) {
-      infoEl.innerHTML = '<span class="muted">Select movies to delete.</span>';
+      infoEl.innerHTML = '<span class="muted">' + selectPrompt + '</span>';
     } else {
       infoEl.innerHTML = '<strong class="mono">' + checked.length + '</strong><span class="muted"> selected</span>';
     }
@@ -135,5 +136,5 @@
 })();
 </script>
 {% else %}
-<div class="empty-state">No movies match the current filter.</div>
+<div class="empty-state">{{ t('movies.empty') }}</div>
 {% endif %}

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Settings — Selectarr{% endblock %}
+{% block title %}{{ t('settings.title') }} — Selectarr{% endblock %}
 {% block content %}
 
 <header class="page-header">
   <div>
     <div class="page-eyebrow"><span class="muted small mono">~/config/config.yaml</span></div>
-    <h1 class="page-title">Settings</h1>
-    <p class="page-subtitle">Saved to config.yaml. Jellyfin is required; Radarr, Sonarr, and Lidarr are optional — leave both fields empty to disable a tab.</p>
+    <h1 class="page-title">{{ t('settings.title') }}</h1>
+    <p class="page-subtitle">{{ t('settings.subtitle') }}</p>
   </div>
 </header>
 
@@ -22,6 +22,26 @@
   <div class="banner-body"><strong>Could not save</strong><span>{{ error }}</span></div>
 </div>
 {% endif %}
+
+{# ── Language selector ────────────────────────────────────────────── #}
+<div class="card" style="margin-bottom:14px;">
+  <div class="card-header">
+    <h2>{{ t('settings.language_label') }}</h2>
+    <p>{{ t('settings.language_hint') }}</p>
+  </div>
+  <div class="card-body">
+    <form method="post" action="/settings/language" style="display:flex;gap:10px;align-items:center;">
+      <span class="select-wrap" style="min-width:180px;">
+        <select name="language" onchange="this.form.submit()">
+          {% for code, name in SUPPORTED_LANGUAGES.items() %}
+          <option value="{{ code }}" {% if current_lang == code %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+        <span class="select-caret">▾</span>
+      </span>
+    </form>
+  </div>
+</div>
 
 <form method="post" action="/settings">
 
@@ -223,7 +243,7 @@
   </section>
 
   <div style="margin-top:16px; display:flex; justify-content:flex-end;">
-    <button type="submit" class="btn btn-primary">Save settings</button>
+    <button type="submit" class="btn btn-primary">{{ t('settings.save') }}</button>
   </div>
 
 </form>

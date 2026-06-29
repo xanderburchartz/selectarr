@@ -1,7 +1,7 @@
 <header class="drawer-header">
   <div>
-    <div class="drawer-eyebrow">{% if dry_run %}Dry-run preview{% else %}Confirm deletion{% endif %}</div>
-    <h2>Review before delete</h2>
+    <div class="drawer-eyebrow">{% if dry_run %}{{ t('confirm.eyebrow_dry') }}{% else %}{{ t('confirm.eyebrow_live') }}{% endif %}</div>
+    <h2>{{ t('confirm.title') }}</h2>
   </div>
   <button class="icon-btn" onclick="closeDrawer()" aria-label="Close">
     <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
@@ -13,31 +13,31 @@
   <div class="banner banner-warning">
     <span class="banner-icon" aria-hidden="true">!</span>
     <div class="banner-body">
-      <strong>Dry-run mode is on.</strong>
-      <span>No files will be touched. This shows what <em>would</em> happen.</span>
+      <strong>{{ t('banner.dry_run_on') }}</strong>
+      <span>{{ t('banner.dry_run_detail') }}</span>
     </div>
   </div>
   {% else %}
   <div class="banner banner-error">
     <span class="banner-icon" aria-hidden="true">!</span>
     <div class="banner-body">
-      <strong>This will permanently delete files.</strong>
-      <span>Files are removed from disk by Radarr. This cannot be undone.</span>
+      <strong>{{ t('banner.delete_warning') }}</strong>
+      <span>{{ t('banner.delete_warning_detail_movies') }}</span>
     </div>
   </div>
   {% endif %}
 
   <div class="drawer-stat-row">
     <div class="stat">
-      <div class="stat-label">Scope</div>
+      <div class="stat-label">{{ t('confirm.scope') }}</div>
       <div class="stat-value">movies</div>
     </div>
     <div class="stat">
-      <div class="stat-label">Items</div>
+      <div class="stat-label">{{ t('confirm.items') }}</div>
       <div class="stat-value mono">{{ selected|length }}</div>
     </div>
     <div class="stat">
-      <div class="stat-label">{% if dry_run %}Would free{% else %}Will free{% endif %}</div>
+      <div class="stat-label">{% if dry_run %}{{ t('confirm.would_free') }}{% else %}{{ t('confirm.will_free') }}{% endif %}</div>
       <div class="stat-value mono">
         {%- set ns = namespace(total=0) -%}
         {%- for m in selected -%}{%- set ns.total = ns.total + (m.sizeOnDisk or 0) -%}{%- endfor -%}
@@ -48,7 +48,7 @@
     </div>
   </div>
 
-  <h3 class="drawer-section-title">Items</h3>
+  <h3 class="drawer-section-title">{{ t('confirm.items_list') }}</h3>
   <ul class="drawer-list">
     {% for movie in selected %}
     <li>
@@ -70,13 +70,13 @@
 </div>
 
 <footer class="drawer-footer">
-  <button type="button" class="btn btn-secondary" onclick="closeDrawer()">Cancel</button>
+  <button type="button" class="btn btn-secondary" onclick="closeDrawer()">{{ t('common.cancel') }}</button>
   <button type="button" class="btn btn-danger"
     hx-post="/movies/delete"
     hx-include="#confirm-movies-form"
     hx-target="#delete-area"
     hx-swap="innerHTML">
     <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-    {% if dry_run %}Run simulation{% else %}Delete now{% endif %}
+    {% if dry_run %}{{ t('confirm.run_simulation') }}{% else %}{{ t('confirm.delete_now') }}{% endif %}
   </button>
 </footer>

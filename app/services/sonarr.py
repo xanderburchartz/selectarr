@@ -96,6 +96,17 @@ class SonarrService:
             )
             resp.raise_for_status()
 
+    async def get_language_profiles(self) -> dict[int, str]:
+        """Return {id: name} for Sonarr language profiles (v3). Returns {} on v4 or error."""
+        try:
+            async with _client(self.url, self.api_key) as client:
+                resp = await client.get("/api/v3/languageprofile")
+                if resp.status_code == 200:
+                    return {p["id"]: p["name"] for p in resp.json()}
+        except Exception:
+            pass
+        return {}
+
     async def health_check(self) -> bool:
         """Return True if Sonarr is reachable."""
         try:

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Music — Selectarr{% endblock %}
+{% block title %}{{ t('music.title') }} — Selectarr{% endblock %}
 {% block content %}
 
 <header class="page-header">
@@ -7,8 +7,8 @@
     <div class="page-eyebrow">
       <span class="service-tag"><span class="service-dot lidarr"></span> Lidarr</span>
     </div>
-    <h1 class="page-title">Music</h1>
-    <p class="page-subtitle">Delete artists, albums, or individual tracks.</p>
+    <h1 class="page-title">{{ t('music.title') }}</h1>
+    <p class="page-subtitle">{{ t('music.subtitle') }}</p>
   </div>
 </header>
 
@@ -16,7 +16,7 @@
 <div class="banner banner-error">
   <span class="banner-icon" aria-hidden="true">!</span>
   <div class="banner-body">
-    <strong>Service unavailable</strong>
+    <strong>{{ t('banner.service_unavailable') }}</strong>
     <span>{{ service_error }} <a href="/settings">Check Settings →</a></span>
   </div>
 </div>
@@ -25,7 +25,7 @@
 <div class="banner banner-warning">
   <span class="banner-icon" aria-hidden="true">!</span>
   <div class="banner-body">
-    <strong>Watch status unavailable</strong>
+    <strong>{{ t('banner.watch_unavailable') }}</strong>
     <span>{{ jellyfin_warning }}</span>
   </div>
 </div>
@@ -33,7 +33,7 @@
 
 <div class="filter-bar">
   <label class="field">
-    <span class="field-label">Filter</span>
+    <span class="field-label">{{ t('common.filter') }}</span>
     <span class="select-wrap">
       <select id="filter-select" name="filter"
         hx-get="/music/list"
@@ -41,7 +41,7 @@
         hx-include="#user-select"
         hx-indicator="#loading">
         {% for value, label in filter_options %}
-          <option value="{{ value }}" {% if filter == value %}selected{% endif %}>{{ label }}</option>
+          <option value="{{ value }}" {% if filter == value %}selected{% endif %}>{{ t(label) }}</option>
         {% endfor %}
       </select>
       <span class="select-caret">▾</span>
@@ -49,14 +49,14 @@
   </label>
 
   <label class="field">
-    <span class="field-label">User</span>
+    <span class="field-label">{{ t('common.user') }}</span>
     <span class="select-wrap">
       <select id="user-select" name="user_id"
         hx-get="/music/list"
         hx-target="#music-container"
         hx-include="#filter-select"
         hx-indicator="#loading">
-        <option value="">— all users —</option>
+        <option value="">{{ t('common.all_users') }}</option>
         {% for user in users %}
           <option value="{{ user.id }}" {% if filter_user_id == user.id %}selected{% endif %}>{{ user.name }}</option>
         {% endfor %}
@@ -66,7 +66,7 @@
   </label>
 
   <div class="filter-bar-spacer">
-    <span id="loading" class="htmx-indicator muted small">Loading…</span>
+    <span id="loading" class="htmx-indicator muted small">{{ t('common.loading') }}</span>
   </div>
 </div>
 

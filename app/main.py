@@ -24,6 +24,16 @@ _SETTINGS_EXEMPT = ("/settings", "/docs", "/redoc", "/openapi", "/status", "/sta
 _AUTH_EXEMPT = ("/login", "/logout", "/static", "/docs", "/redoc", "/openapi", "/status")
 
 
+class LangMiddleware(BaseHTTPMiddleware):
+    """Read selectarr_lang cookie → request.state.lang."""
+    async def dispatch(self, request: Request, call_next):
+        lang = request.cookies.get("selectarr_lang", "en")
+        if lang not in ("en", "nl", "de", "es", "pt", "fr", "zh", "ar"):
+            lang = "en"
+        request.state.lang = lang
+        return await call_next(request)
+
+
 class ConfigGateMiddleware(BaseHTTPMiddleware):
     """Redirect to /settings when config is missing or incomplete."""
 
@@ -75,8 +85,9 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Middleware is applied inside-out: last added = outermost = runs first.
-# Desired order: ConfigGate → AuthMiddleware → app
-# So add AuthMiddleware first (inner), ConfigGate second (outer).
+# Desired order: ConfigGate → AuthMiddleware → LangMiddleware → app
+# So add LangMiddleware first (innermost), then AuthMiddleware, then ConfigGate (outermost).
+app.add_middleware(LangMiddleware)
 app.add_middleware(AuthMiddleware)
 app.add_middleware(ConfigGateMiddleware)
 

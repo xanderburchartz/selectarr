@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Overview — Selectarr{% endblock %}
+{% block title %}{{ t('home.title') }} — Selectarr{% endblock %}
 {% block content %}
 
 <header class="page-header">
   <div>
-    <h1 class="page-title">Overview</h1>
-    <p class="page-subtitle">Library statistics across all connected services.</p>
+    <h1 class="page-title">{{ t('home.title') }}</h1>
+    <p class="page-subtitle">{{ t('home.subtitle') }}</p>
   </div>
   <div class="page-action">
-    <span id="stats-loading" class="htmx-indicator muted small">Loading…</span>
+    <span id="stats-loading" class="htmx-indicator muted small">{{ t('common.loading') }}</span>
     <button class="btn btn-secondary btn-sm"
       hx-get="/stats?refresh=true"
       hx-target="#stats-section"
       hx-swap="outerHTML"
       hx-indicator="#stats-loading">
       <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 12 4.3"/><path d="M13.5 1.5v3h-3"/></svg>
-      Refresh
+      {{ t('home.refresh') }}
     </button>
   </div>
 </header>

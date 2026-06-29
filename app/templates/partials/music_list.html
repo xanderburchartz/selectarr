@@ -13,8 +13,8 @@
           </label>
         </th>
         <th class="col-expand"></th>
-        <th>Artist</th>
-        <th class="col-num">Albums</th>
+        <th>{{ t('col.artist') }}</th>
+        <th class="col-num">{{ t('col.albums') }}</th>
         <th class="col-size">
           <button class="sort-btn{% if sort_by == 'size' %} sort-active{% endif %}"
             hx-get="/music/list"
@@ -22,9 +22,9 @@
             hx-swap="innerHTML"
             hx-include="#filter-select,#user-select"
             hx-vals='{"sort_by":"size","sort_dir":"{{ "asc" if sort_dir == "desc" else "desc" }}"}'
-            aria-label="Sort by size">Size{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
+            aria-label="Sort by size">{{ t('col.size') }}{% if sort_by == 'size' %}<span class="sort-arrow">{{ '▲' if sort_dir == 'asc' else '▼' }}</span>{% endif %}</button>
         </th>
-        <th class="col-watched">Listened</th>
+        <th class="col-watched">{{ t('col.listened') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -56,9 +56,9 @@
         <td class="col-watched">
           {% if artist.watch_status %}
             {% if artist.watch_status.watched_by_none %}
-              <span class="muted small">Never listened</span>
+              <span class="muted small">{{ t('watch.not_listened') }}</span>
             {% elif artist.watch_status.watched_by_all %}
-              <span class="small">Listened by all</span>
+              <span class="small">{{ t('watch.listened_by_all') }}</span>
             {% else %}
               {% set ns = namespace(names=[]) %}
               {% for user in users %}
@@ -69,7 +69,7 @@
               <span class="small">Listened by: {{ ns.names | join(', ') }}</span>
             {% endif %}
           {% else %}
-            <span class="muted small">—</span>
+            <span class="muted small">{{ t('watch.no_data') }}</span>
           {% endif %}
         </td>
       </tr>
@@ -87,7 +87,7 @@
       hx-target="#delete-area"
       hx-swap="innerHTML">
       <span class="btn-icon"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.5M4.5 4.5l.7 8a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-8"/><path d="M7 7v4M9 7v4"/></svg></span>
-      <span class="ar-del-label">Delete selected</span>
+      <span class="ar-del-label">{{ t('common.delete_selected') }}</span>
     </button>
   </div>
 </div>
@@ -96,6 +96,8 @@
 (function () {
   var allCb  = document.getElementById('cb-all-artists');
   var delBtn = document.getElementById('ar-del-btn');
+  var loadingText = '{{ t("common.loading") }}';
+  var deleteText  = '{{ t("common.delete_selected") }}';
   // artistId → { fullAlbums: [id,…], albumTrkMap: { albumId: [trkFileId,…] } }
   var artMap = {};
 
@@ -235,10 +237,10 @@
   var _delBtnLabel = delBtn.querySelector('.ar-del-label');
   delBtn.addEventListener('htmx:beforeRequest', function () {
     delBtn.disabled = true;
-    _delBtnLabel.textContent = 'Loading…';
+    _delBtnLabel.textContent = loadingText;
   });
   delBtn.addEventListener('htmx:afterRequest', function () {
-    _delBtnLabel.textContent = 'Delete selected';
+    _delBtnLabel.textContent = deleteText;
     updateUI();
   });
 
@@ -246,5 +248,5 @@
 })();
 </script>
 {% else %}
-<div class="empty-state">No artists match the current filter.</div>
+<div class="empty-state">{{ t('music.empty') }}</div>
 {% endif %}
