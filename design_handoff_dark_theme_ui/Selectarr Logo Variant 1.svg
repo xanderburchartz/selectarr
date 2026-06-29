@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Selectarr — Bin &amp; Check">
+  
+  <circle cx="100" cy="100" r="92" fill="#5865F2"></circle>
+
+  
+  <rect x="84" y="56" width="32" height="8" rx="3" fill="#ffffff"></rect>
+
+  
+  <rect x="52" y="68" width="96" height="14" rx="4" fill="#ffffff"></rect>
+
+  
+  <path d="M60 90 L140 90 L132 152 Q132 156 128 156 L72 156 Q68 156 68 152 Z" fill="#ffffff"></path>
+
+  
+  <path d="M76 119 L92 137 L124 105" fill="none" stroke="#F04C5C" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
