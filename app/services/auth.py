@@ -5,7 +5,7 @@ import secrets
 import time
 from typing import Optional
 
-_SESSION_TTL = 7 * 24 * 3600  # 7 days
+_SESSION_TTL = 24 * 3600  # 1 day
 _COOKIE = "selectarr_session"
 
 _sessions: dict[str, dict] = {}

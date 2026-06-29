@@ -41,7 +41,7 @@ async def login_submit(
         result["user_id"], result["username"], result["is_admin"], result["token"]
     )
     response = RedirectResponse("/", status_code=302)
-    response.set_cookie(_COOKIE, token, httponly=True, samesite="lax", max_age=7 * 24 * 3600)
+    response.set_cookie(_COOKIE, token, httponly=True, samesite="lax", max_age=24 * 3600)
     return response
 
 
