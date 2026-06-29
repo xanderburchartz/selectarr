@@ -2,6 +2,22 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.4] — 2026-06-29
+
+### Fixed
+
+- **Whole-series deletion was unreachable** — the backend, confirmation
+  drawer and "Will free" calculation for series-level deletes already
+  existed (and the page subtitle advertised series-level deletion), but no
+  selection ever produced the `series` action, so it could never run. The
+  single "Delete selected" button is now context-aware: selecting **every**
+  season of a series deletes the entire series from Sonarr (including its
+  files, honouring the import-exclusion setting) and the confirmation shows
+  the full series size from `statistics.sizeOnDisk`. Selecting individual
+  seasons or episodes behaves exactly as before.
+
+---
+
 ## [0.2.3] — 2026-05-19
 
 ### Fixed

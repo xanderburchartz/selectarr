@@ -225,15 +225,20 @@
           epFileIds = epFileIds.concat(epMap[sn] || []);
         }
       });
-      var action = epFileIds.length === 0 ? 'season'
+      // Context-aware: selecting every season (and no partial episodes) deletes
+      // the whole series from Sonarr; otherwise delete seasons/episodes/mixed.
+      var totalSeasons = getSeasonCbs().length;
+      var allSelected  = totalSeasons > 0 && epFileIds.length === 0 && fullSeasons.length === totalSeasons;
+      var action = allSelected ? 'series'
+                 : epFileIds.length === 0 ? 'season'
                  : fullSeasons.length === 0 ? 'episode'
                  : 'mixed';
       // Replace parameters in-place so HTMX serialises our values.
       Object.keys(params).forEach(function (k) { delete params[k]; });
       params['sonarr_id'] = String(SID);
       params['action']    = action;
-      if (fullSeasons.length) params['season_numbers']   = fullSeasons;
-      if (epFileIds.length)   params['episode_file_ids'] = epFileIds;
+      if (action !== 'series' && fullSeasons.length) params['season_numbers']   = fullSeasons;
+      if (epFileIds.length)                          params['episode_file_ids'] = epFileIds;
     });
 
     var _delBtnLabel = delBtn.querySelector('.s-del-label-' + SID);
