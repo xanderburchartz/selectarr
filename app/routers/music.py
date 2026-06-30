@@ -537,6 +537,8 @@ async def music_delete(
                 await log_action("music", t, "track", dry_run=False, success=False, details=msg)
 
         if any_success:
+            from app.routers.home import invalidate_stats_cache
+            invalidate_stats_cache()
             # Skip rescan when artists were fully deleted from Lidarr — they no longer exist.
             # RescanArtist on a deleted artist returns 500. Jellyfin refresh still runs.
             rescan_id = None if (action == "artist" or effective_artists) else artist_id

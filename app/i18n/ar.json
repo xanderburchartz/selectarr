@@ -105,6 +105,8 @@
   "home.title": "نظرة عامة",
   "home.subtitle": "إحصاءات المكتبة عبر جميع الخدمات المتصلة.",
   "home.total_size": "الحجم الإجمالي للمكتبة",
+  "home.free_space": "مساحة فارغة",
+  "home.of": "من",
   "home.refresh": "تحديث",
   "login.title": "Selectarr",
   "login.subtitle": "تسجيل الدخول بحساب Jellyfin الخاص بك",

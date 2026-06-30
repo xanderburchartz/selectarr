@@ -105,6 +105,8 @@
   "home.title": "概览",
   "home.subtitle": "所有已连接服务的媒体库统计信息。",
   "home.total_size": "媒体库总大小",
+  "home.free_space": "可用空间",
+  "home.of": "共",
   "home.refresh": "刷新",
   "login.title": "Selectarr",
   "login.subtitle": "使用您的 Jellyfin 账户登录",

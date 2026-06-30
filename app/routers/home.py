@@ -33,6 +33,14 @@ def _gb(b: int) -> float:
     return round(b / 1_073_741_824, 1)
 
 
+def _human_space(b: int) -> str:
+    """Format a byte count as a human-readable size (TB when >= 1 TB, else GB)."""
+    gb = b / 1_073_741_824
+    if gb >= 1024:
+        return f"{gb / 1024:.1f} TB"
+    return f"{gb:.1f} GB"
+
+
 async def _fetch_movies(config) -> Optional[dict]:
     if not config.radarr:
         return None
@@ -114,6 +122,47 @@ async def _fetch_music(config) -> Optional[dict]:
         return {"error": True}
 
 
+async def _fetch_disk_space(config) -> Optional[dict]:
+    """Aggregate free/total disk space across the configured *arr services.
+
+    Mount points are de-duplicated by path so a drive shared by Radarr, Sonarr
+    and Lidarr is only counted once. Returns None when no service reports space.
+    """
+    tasks = []
+    if config.radarr:
+        from app.services.radarr import RadarrService
+        tasks.append(RadarrService(config.radarr.url, config.radarr.api_key).get_disk_space())
+    if config.sonarr:
+        from app.services.sonarr import SonarrService
+        tasks.append(SonarrService(config.sonarr.url, config.sonarr.api_key).get_disk_space())
+    if config.lidarr:
+        from app.services.lidarr import LidarrService
+        tasks.append(LidarrService(config.lidarr.url, config.lidarr.api_key).get_disk_space())
+    if not tasks:
+        return None
+
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    by_path: dict[str, tuple[int, int]] = {}
+    for r in results:
+        if isinstance(r, BaseException) or not r:
+            continue
+        for d in r:
+            path = d.get("path")
+            if path and path not in by_path:
+                by_path[path] = (d.get("freeSpace", 0) or 0, d.get("totalSpace", 0) or 0)
+
+    if not by_path:
+        return None
+
+    free = sum(v[0] for v in by_path.values())
+    total = sum(v[1] for v in by_path.values())
+    return {
+        "free_human": _human_space(free),
+        "total_human": _human_space(total),
+        "used_pct": round((total - free) / total * 100) if total else 0,
+    }
+
+
 async def _fetch_last_deleted() -> dict:
     try:
         entries = await get_log_entries(limit=500)
@@ -129,15 +178,26 @@ async def _fetch_last_deleted() -> dict:
         return {"movie": None, "series": None, "music": None}
 
 
+def invalidate_stats_cache() -> None:
+    """Drop the cached Overview stats so the next load recomputes from the *arr APIs.
+
+    Called after a successful deletion so the library size and free disk space
+    on the Overview reflect the change immediately, instead of after the TTL.
+    """
+    global _stats_cache
+    _stats_cache = []
+
+
 async def _build_stats(config, force: bool = False) -> dict:
     global _stats_cache
     if not force and _stats_cache and time.monotonic() - _stats_cache[0] < _STATS_TTL:
         return _stats_cache[1]
 
-    movies, series, music, last_del = await asyncio.gather(
+    movies, series, music, disk, last_del = await asyncio.gather(
         _fetch_movies(config),
         _fetch_series(config),
         _fetch_music(config),
+        _fetch_disk_space(config),
         _fetch_last_deleted(),
     )
 
@@ -153,7 +213,7 @@ async def _build_stats(config, force: bool = False) -> dict:
         if s and not s.get("error")
     ), 1)
 
-    data = {"movies": movies, "series": series, "music": music, "total_gb": total_gb}
+    data = {"movies": movies, "series": series, "music": music, "total_gb": total_gb, "disk": disk}
     _stats_cache = [time.monotonic(), data]
     return data
 

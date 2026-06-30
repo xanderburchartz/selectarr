@@ -618,6 +618,8 @@ async def series_delete(
                     await log_action("series", t, "episode", dry_run=False, success=False, details=msg)
 
         if any_success:
+            from app.routers.home import invalidate_stats_cache
+            invalidate_stats_cache()
             background_tasks.add_task(_refresh_after_series_delete, config, sonarr_id, series_title)
 
     delete_result = DeleteResult(

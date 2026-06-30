@@ -2,6 +2,23 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.4.1] — 2026-06-30
+
+### Added
+
+- **Free disk space on the Overview** — the summary banner now shows the
+  current free space (and total) of the media drive(s), queried live from the
+  `diskspace` endpoint of the configured Radarr/Sonarr/Lidarr services. Mount
+  points shared across services are de-duplicated so a drive is counted once.
+
+### Fixed
+
+- **Overview showed stale library size after a deletion** — the Overview
+  statistics are cached for 15 minutes, but the cache was not cleared after a
+  delete, so freed space only appeared after the cache expired or a manual
+  refresh. The cache is now invalidated on every successful movie, series, or
+  music deletion, so the library size and free space update immediately.
+
 ## [0.2.4] — 2026-06-29
 
 ### Fixed

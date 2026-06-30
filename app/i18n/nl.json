@@ -105,6 +105,8 @@
   "home.title": "Overzicht",
   "home.subtitle": "Bibliotheekoverzicht van alle verbonden services.",
   "home.total_size": "Totale schijfruimte",
+  "home.free_space": "Vrije ruimte",
+  "home.of": "van",
   "home.refresh": "Vernieuwen",
   "login.title": "Selectarr",
   "login.subtitle": "Log in met je Jellyfin-account.",

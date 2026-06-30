@@ -302,6 +302,8 @@ async def movies_delete(
                 await log_action("movie", title, "movie", dry_run=False, success=False, details=msg)
 
     if deleted:
+        from app.routers.home import invalidate_stats_cache
+        invalidate_stats_cache()
         background_tasks.add_task(_refresh_after_movies_delete, config, deleted)
 
     delete_result = DeleteResult(

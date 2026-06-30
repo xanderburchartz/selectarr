@@ -7,6 +7,10 @@
   <div class="stat-total-banner">
     <div class="stat-total-value">{{ stats.total_gb }} GB</div>
     <div class="stat-total-label">{{ t('home.total_size') }}</div>
+    {% if stats.disk %}
+    <div class="stat-total-value" style="margin-left:auto">{{ stats.disk.free_human }}</div>
+    <div class="stat-total-label">{{ t('home.free_space') }} <span class="muted">({{ t('home.of') }} {{ stats.disk.total_human }})</span></div>
+    {% endif %}
   </div>
 
   <div class="stats-grid">

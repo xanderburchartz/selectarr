@@ -105,6 +105,8 @@
   "home.title": "Aperçu",
   "home.subtitle": "Statistiques de bibliothèque sur tous les services connectés.",
   "home.total_size": "Taille totale de la bibliothèque",
+  "home.free_space": "Espace libre",
+  "home.of": "sur",
   "home.refresh": "Actualiser",
   "login.title": "Selectarr",
   "login.subtitle": "Connectez-vous avec votre compte Jellyfin",

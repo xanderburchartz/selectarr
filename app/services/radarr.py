@@ -28,6 +28,13 @@ class RadarrService:
             resp.raise_for_status()
             return resp.json()
 
+    async def get_disk_space(self) -> list[dict]:
+        """Return disk space info [{path, label, freeSpace, totalSpace}, ...]."""
+        async with _client(self.url, self.api_key) as client:
+            resp = await client.get("/api/v3/diskspace")
+            resp.raise_for_status()
+            return resp.json()
+
     async def delete_movie(
         self,
         movie_id: int,
