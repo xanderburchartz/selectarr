@@ -33,6 +33,13 @@ class SonarrService:
             resp.raise_for_status()
             return resp.json()
 
+    async def get_root_folders(self) -> list[dict]:
+        """Return configured root folders [{path, freeSpace, ...}, ...] (media library paths)."""
+        async with _client(self.url, self.api_key) as client:
+            resp = await client.get("/api/v3/rootfolder")
+            resp.raise_for_status()
+            return resp.json()
+
     async def get_episodes(self, series_id: int) -> list[dict]:
         """Return all episodes for a series."""
         async with _client(self.url, self.api_key) as client:

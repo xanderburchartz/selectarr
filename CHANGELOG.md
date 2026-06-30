@@ -2,6 +2,17 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.4.2] — 2026-06-30
+
+### Fixed
+
+- **Free disk space was over-counted** — a single physical disk is often
+  mounted at several paths (e.g. `/tv`, `/movies`, `/config` all on the same
+  drive), and the previous version summed every `diskspace` entry, multiplying
+  the real capacity. Free space is now based on the disk(s) backing the *arr
+  **root folders** and de-duplicated per physical disk, so the figure matches
+  the "Disk Space" values shown in Radarr/Sonarr/Lidarr (e.g. the `/tv` row).
+
 ## [0.2.4.1] — 2026-06-30
 
 ### Added

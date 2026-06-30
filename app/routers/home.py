@@ -122,44 +122,81 @@ async def _fetch_music(config) -> Optional[dict]:
         return {"error": True}
 
 
-async def _fetch_disk_space(config) -> Optional[dict]:
-    """Aggregate free/total disk space across the configured *arr services.
+def _mount_for(path: str, disks: list[tuple[str, int, int]]) -> Optional[tuple[str, int, int]]:
+    """Return the (path, free, total) disk entry that `path` lives on (longest prefix)."""
+    best = None
+    for entry in disks:
+        base = entry[0].rstrip("/")
+        if path == entry[0] or path == base or path.startswith(base + "/"):
+            if best is None or len(entry[0]) > len(best[0]):
+                best = entry
+    return best
 
-    Mount points are de-duplicated by path so a drive shared by Radarr, Sonarr
-    and Lidarr is only counted once. Returns None when no service reports space.
+
+async def _fetch_disk_space(config) -> Optional[dict]:
+    """Free/total space of the drive(s) holding the media libraries.
+
+    A single physical disk is often mounted at several paths (e.g. /tv,
+    /movies, /config all on the same drive), so summing raw `diskspace` entries
+    over-counts. Instead we look up the disk backing each *arr root folder and
+    de-duplicate by total size (same physical disk → same total), which matches
+    the "Disk Space" figures shown in Radarr/Sonarr/Lidarr themselves.
     """
-    tasks = []
+    services = []
     if config.radarr:
         from app.services.radarr import RadarrService
-        tasks.append(RadarrService(config.radarr.url, config.radarr.api_key).get_disk_space())
+        services.append(RadarrService(config.radarr.url, config.radarr.api_key))
     if config.sonarr:
         from app.services.sonarr import SonarrService
-        tasks.append(SonarrService(config.sonarr.url, config.sonarr.api_key).get_disk_space())
+        services.append(SonarrService(config.sonarr.url, config.sonarr.api_key))
     if config.lidarr:
         from app.services.lidarr import LidarrService
-        tasks.append(LidarrService(config.lidarr.url, config.lidarr.api_key).get_disk_space())
-    if not tasks:
+        services.append(LidarrService(config.lidarr.url, config.lidarr.api_key))
+    if not services:
         return None
 
+    tasks = []
+    for svc in services:
+        tasks.append(svc.get_disk_space())
+        tasks.append(svc.get_root_folders())
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    by_path: dict[str, tuple[int, int]] = {}
-    for r in results:
-        if isinstance(r, BaseException) or not r:
-            continue
-        for d in r:
-            path = d.get("path")
-            if path and path not in by_path:
-                by_path[path] = (d.get("freeSpace", 0) or 0, d.get("totalSpace", 0) or 0)
 
-    if not by_path:
+    disks: list[tuple[str, int, int]] = []   # (path, free, total)
+    root_paths: list[str] = []               # media library paths
+    for i in range(len(services)):
+        ds, rf = results[2 * i], results[2 * i + 1]
+        if not isinstance(ds, BaseException) and ds:
+            for d in ds:
+                path, total = d.get("path"), d.get("totalSpace", 0) or 0
+                if path and total > 0:
+                    disks.append((path, d.get("freeSpace", 0) or 0, total))
+        if not isinstance(rf, BaseException) and rf:
+            for r in rf:
+                if r.get("path"):
+                    root_paths.append(r["path"])
+
+    if not disks:
         return None
 
-    free = sum(v[0] for v in by_path.values())
-    total = sum(v[1] for v in by_path.values())
+    # Keyed by total size so the same physical disk is counted once.
+    by_disk: dict[int, tuple[int, int]] = {}
+    for r in root_paths:
+        m = _mount_for(r, disks)
+        if m:
+            by_disk[m[2]] = (m[1], m[2])
+    if not by_disk:
+        # No root folders matched — fall back to all distinct disks the services see.
+        for (_p, free, total) in disks:
+            by_disk[total] = (free, total)
+
+    free = sum(v[0] for v in by_disk.values())
+    total = sum(v[1] for v in by_disk.values())
+    if total <= 0:
+        return None
     return {
         "free_human": _human_space(free),
         "total_human": _human_space(total),
-        "used_pct": round((total - free) / total * 100) if total else 0,
+        "used_pct": round((total - free) / total * 100),
     }
 
 

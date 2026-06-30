@@ -33,6 +33,13 @@ class LidarrService:
             resp.raise_for_status()
             return resp.json()
 
+    async def get_root_folders(self) -> list[dict]:
+        """Return configured root folders [{path, freeSpace, ...}, ...] (media library paths)."""
+        async with _client(self.url, self.api_key) as client:
+            resp = await client.get("/api/v1/rootfolder")
+            resp.raise_for_status()
+            return resp.json()
+
     async def get_all_albums(self) -> list[dict]:
         """Return all albums across all artists."""
         async with _client(self.url, self.api_key) as client:
