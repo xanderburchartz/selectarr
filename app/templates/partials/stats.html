@@ -17,7 +17,7 @@
 
     {# ── Movies ── #}
     {% set m = stats.movies %}
-    <div class="card">
+    <a class="card stat-card-link" href="/movies">
       <div class="card-header">
         <div class="service-head">
           <span class="service-dot radarr"></span>
@@ -47,11 +47,11 @@
           </div>
         {% endif %}
       </div>
-    </div>
+    </a>
 
     {# ── Series ── #}
     {% set s = stats.series %}
-    <div class="card">
+    <a class="card stat-card-link" href="/series">
       <div class="card-header">
         <div class="service-head">
           <span class="service-dot sonarr"></span>
@@ -83,11 +83,11 @@
           </div>
         {% endif %}
       </div>
-    </div>
+    </a>
 
     {# ── Music ── #}
     {% set mu = stats.music %}
-    <div class="card">
+    <a class="card stat-card-link" href="/music">
       <div class="card-header">
         <div class="service-head">
           <span class="service-dot lidarr"></span>
@@ -119,7 +119,7 @@
           </div>
         {% endif %}
       </div>
-    </div>
+    </a>
 
   </div>
 </div>

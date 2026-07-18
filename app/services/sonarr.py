@@ -78,7 +78,10 @@ class SonarrService:
         if not episode_file_ids:
             return
         async with _client(self.url, self.api_key) as client:
-            resp = await client.delete(
+            # httpx's convenience .delete() does not accept a request body, so use
+            # .request() to send the JSON payload the bulk endpoint requires.
+            resp = await client.request(
+                "DELETE",
                 "/api/v3/episodefile/bulk",
                 json={"episodeFileIds": episode_file_ids},
             )

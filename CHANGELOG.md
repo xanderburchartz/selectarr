@@ -2,6 +2,23 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.5] — 2026-07-19
+
+### Added
+
+- **Clickable Overview cards** — the Movies, Series, and Music cards on the
+  Overview page are now links that navigate directly to the respective page.
+
+### Fixed
+
+- **Episode deletion failed silently** — deleting individual episodes called
+  Sonarr's bulk episode-file endpoint via `httpx.delete()`, which does not
+  support a request body. Switched to `httpx.request("DELETE", ...)` so the
+  JSON payload is sent correctly. Previously the delete appeared to succeed
+  but no files were actually removed.
+
+---
+
 ## [0.2.4.2] — 2026-06-30
 
 ### Fixed
