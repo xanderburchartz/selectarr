@@ -138,6 +138,7 @@ class DeleteResultItem(BaseModel):
     level: str
     success: bool
     message: str
+    count: int = 1  # number of underlying units this row represents (e.g. episodes)
 
 
 class DeleteResult(BaseModel):

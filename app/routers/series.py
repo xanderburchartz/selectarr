@@ -469,6 +469,17 @@ async def series_confirm(
     else:
         items = [series_title]
 
+    # Count the actual units being deleted (episodes/seasons), not the number of
+    # grouped summary lines — otherwise "8 episodes" would show as 1 item.
+    if action == "episode":
+        item_count = len(episode_file_ids)
+    elif action == "season":
+        item_count = len(effective_seasons)
+    elif action == "mixed":
+        item_count = len(effective_seasons) + len(episode_file_ids)
+    else:
+        item_count = 1
+
     freed_bytes = 0
     if action == "series" and series:
         freed_bytes = series.get("statistics", {}).get("sizeOnDisk", 0)
@@ -496,6 +507,7 @@ async def series_confirm(
         "partials/confirm_series.html",
         {
             "items": items,
+            "item_count": item_count,
             "action": action,
             "sonarr_id": sonarr_id,
             "season_numbers": effective_seasons,
@@ -546,7 +558,7 @@ async def series_delete(
                 await log_action("series", t, "season", dry_run=True, success=True, details="dry-run")
         elif action == "episode":
             t = f"{series_title} – {len(episode_file_ids)} episode(s)"
-            results.append(DeleteResultItem(title=t, level="episode", success=True, message="[dry-run] Would delete"))
+            results.append(DeleteResultItem(title=t, level="episode", success=True, message="[dry-run] Would delete", count=len(episode_file_ids)))
             await log_action("series", t, "episode", dry_run=True, success=True, details="dry-run")
         elif action == "mixed":
             for sn in effective_seasons:
@@ -555,7 +567,7 @@ async def series_delete(
                 await log_action("series", t, "season", dry_run=True, success=True, details="dry-run")
             if episode_file_ids:
                 t = f"{series_title} – {len(episode_file_ids)} individual episode(s)"
-                results.append(DeleteResultItem(title=t, level="episode", success=True, message="[dry-run] Would delete"))
+                results.append(DeleteResultItem(title=t, level="episode", success=True, message="[dry-run] Would delete", count=len(episode_file_ids)))
                 await log_action("series", t, "episode", dry_run=True, success=True, details="dry-run")
     else:
         if action == "series":
@@ -585,12 +597,12 @@ async def series_delete(
             t = f"{series_title} – {len(episode_file_ids)} episode(s)"
             try:
                 await sonarr.delete_episode_files(episode_file_ids)
-                results.append(DeleteResultItem(title=t, level="episode", success=True, message="Deleted"))
+                results.append(DeleteResultItem(title=t, level="episode", success=True, message="Deleted", count=len(episode_file_ids)))
                 await log_action("series", t, "episode", dry_run=False, success=True)
                 any_success = True
             except httpx.HTTPError as exc:
                 msg = classify_error("Sonarr", exc)
-                results.append(DeleteResultItem(title=t, level="episode", success=False, message=msg))
+                results.append(DeleteResultItem(title=t, level="episode", success=False, message=msg, count=len(episode_file_ids)))
                 await log_action("series", t, "episode", dry_run=False, success=False, details=msg)
         elif action == "mixed":
             for sn in effective_seasons:
@@ -609,12 +621,12 @@ async def series_delete(
                 t = f"{series_title} – {len(episode_file_ids)} individual episode(s)"
                 try:
                     await sonarr.delete_episode_files(episode_file_ids)
-                    results.append(DeleteResultItem(title=t, level="episode", success=True, message="Deleted"))
+                    results.append(DeleteResultItem(title=t, level="episode", success=True, message="Deleted", count=len(episode_file_ids)))
                     await log_action("series", t, "episode", dry_run=False, success=True)
                     any_success = True
                 except httpx.HTTPError as exc:
                     msg = classify_error("Sonarr", exc)
-                    results.append(DeleteResultItem(title=t, level="episode", success=False, message=msg))
+                    results.append(DeleteResultItem(title=t, level="episode", success=False, message=msg, count=len(episode_file_ids)))
                     await log_action("series", t, "episode", dry_run=False, success=False, details=msg)
 
         if any_success:
@@ -625,8 +637,8 @@ async def series_delete(
     delete_result = DeleteResult(
         dry_run=config.dry_run,
         items=results,
-        total_success=sum(1 for r in results if r.success),
-        total_error=sum(1 for r in results if not r.success),
+        total_success=sum(r.count for r in results if r.success),
+        total_error=sum(r.count for r in results if not r.success),
     )
     return templates.TemplateResponse(
         request, "partials/delete_result.html", {"result": delete_result}

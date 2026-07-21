@@ -2,6 +2,17 @@
 
 All notable changes to Selectarr are documented here.
 
+## [0.2.6] — 2026-07-19
+
+### Fixed
+
+- **Episode/season delete count showed "1 item"** — when deleting multiple
+  episodes (or seasons), the confirmation and result grouped them into one
+  summary line and counted that line, so deleting 8 episodes showed "1 item".
+  The item count now reflects the actual number of units per scope: episodes
+  count as episodes, seasons as seasons, a whole series as one. (Freed disk
+  space was already correct.)
+
 ## [0.2.5] — 2026-07-19
 
 ### Added
